@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Freight: move resources, connect industries, transport revenue</title>
+<meta name="description" content="Freight is a Solana launchpad of autonomous freight networks. Terminals, trucks, trains and ships fulfil virtual cargo contracts between token projects and earn transport fees and creator fees.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta name="theme-color" content="#1C1F23">
+<meta property="og:title" content="Freight: move resources, connect industries, transport revenue">
+<meta property="og:description" content="Autonomous freight terminals, trucks, trains and ships that fulfil virtual cargo contracts between token projects on pump.fun.">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Work+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+<style>
+:root{
+  --bg:#EFEDEA;--panel:#FFFFFF;--ink:#16191C;--soft:#424A52;--mute:#737B84;--rule:#DAD7D2;--edge:#16191C;--frame:#16191C;
+  --or:#E25E12;--or-ink:#B04608;--st:#3E6C9C;--st-ink:#2E5884;--map:#E3E0DB;--rail:#9AA1A9;
+  --grid:rgba(22,25,28,.045);--stripe:rgba(22,25,28,.035);
+  --f-head:'Big Shoulders Display','Arial Narrow',sans-serif;
+  --f-ui:'Work Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1C1F23;--panel:#24282D;--ink:#EEF0F2;--soft:#BAC1C9;--mute:#7F8893;--rule:#31363D;--edge:#EEF0F2;--frame:#444B54;
+    --or:#F26B1D;--or-ink:#FF8C42;--st:#5B87B5;--st-ink:#8DB3DB;--map:#191C20;--rail:#4C545E;
+    --grid:rgba(255,255,255,.03);--stripe:rgba(255,255,255,.035);color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1C1F23;--panel:#24282D;--ink:#EEF0F2;--soft:#BAC1C9;--mute:#7F8893;--rule:#31363D;--edge:#EEF0F2;--frame:#444B54;
+  --or:#F26B1D;--or-ink:#FF8C42;--st:#5B87B5;--st-ink:#8DB3DB;--map:#191C20;--rail:#4C545E;
+  --grid:rgba(255,255,255,.03);--stripe:rgba(255,255,255,.035);color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background-color:var(--bg);color:var(--ink);font:400 15.5px/1.55 var(--f-ui);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px dashed var(--or-ink);outline-offset:3px}
+.wrap{max-width:1420px;margin:0 auto;padding:16px}
+.panel{background:var(--panel);border:1.5px solid var(--frame)}
+.ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;padding:13px 18px;border-bottom:1px solid var(--rule);font:500 11.5px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.ph small{font-weight:400;color:var(--mute);letter-spacing:.03em}
+.ph .pix{height:18px;width:auto} .ph .trk{width:44px;flex:none}
+.ph .end{margin-left:auto}
+.pad{padding:18px}
+.tag{display:inline-block;font:500 10.5px/1 var(--f-mono);letter-spacing:.05em;padding:5px 7px;background:var(--ink);color:var(--bg);text-transform:uppercase}
+.tag.or{background:var(--or);color:#1A0A00}
+.tag.st{background:var(--st);color:#fff}
+.tag.ghost{background:transparent;color:var(--soft);border:1px solid var(--rule)}
+.pix rect{fill:var(--ink)} .pix .o{fill:var(--or)} .pix .s{fill:var(--st)}
+.small{font-size:13px;color:var(--soft)}
+.warn{color:#B42318}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{color:#FF9B8C}}
+:root[data-theme="dark"] .warn{color:#FF9B8C}
+.trk{display:block;width:100%;height:auto}
+
+/* header */
+.top{margin-bottom:16px}
+.nav{display:grid;grid-template-columns:auto 1fr auto}
+.brand{display:flex;align-items:center;gap:12px;padding:8px 18px;border-right:1px solid var(--rule);text-decoration:none}
+.brand .trk{width:84px;flex:none}
+.brand b{display:block;font:900 34px/.9 var(--f-head);letter-spacing:.02em;text-transform:uppercase}
+.brand small{display:block;margin-top:4px;font:400 11px/1 var(--f-mono);color:var(--mute);letter-spacing:.05em}
+.tabs{display:grid;grid-template-columns:repeat(8,minmax(88px,1fr));overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:15px 8px 12px;border-right:1px solid var(--rule);text-decoration:none;color:var(--soft);font:500 10.5px/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.tabs a em{position:absolute;top:7px;right:8px;font-style:normal;color:var(--mute);font-size:9.5px}
+.tabs a .pix{height:22px;width:auto}
+.tabs a:hover{background:var(--stripe)}
+.tabs a[aria-current="page"]{color:var(--ink);box-shadow:inset 0 -4px 0 var(--or)}
+.walletcell{position:relative;display:flex;align-items:center;padding:12px 18px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font:700 14px/1.2 var(--f-ui);border:1.5px solid var(--edge);background:var(--panel);color:var(--ink);padding:12px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--edge);text-decoration:none;white-space:nowrap}
+.btn:active:not([disabled]){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--edge)}
+.btn.or{background:var(--or);color:#1A0A00;border-color:#1A0A00}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.btn.sm{padding:7px 10px;font-size:12.5px;box-shadow:2px 2px 0 var(--edge)}
+.btn.wide{width:100%;padding:19px;font-size:16px}
+.btn[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn .dot{width:9px;height:9px;background:#1A0A00;display:inline-block}
+.btn.connected .dot{background:var(--or);outline:1.5px solid var(--edge)}
+.chip{font:500 11px/1 var(--f-mono);letter-spacing:.02em;border:1.5px solid var(--edge);background:var(--panel);padding:7px 10px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip .pix{height:12px;width:auto}
+.chip[aria-pressed="true"]{background:var(--or);color:#1A0A00;border-color:#1A0A00}
+.chip[aria-pressed="true"] .pix rect{fill:#1A0A00}
+.chip[disabled]{opacity:.35;cursor:not-allowed}
+.link{font:700 13px/1 var(--f-ui);border:0;background:none;padding:3px 0;border-bottom:3px solid var(--or);cursor:pointer;text-decoration:none}
+
+/* network */
+.grid-hero{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:16px;align-items:start}
+.col{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-content:start;min-width:0}
+label,.lbl{display:block;font:400 11px/1.2 var(--f-mono);color:var(--soft);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.big{display:flex;align-items:baseline;gap:10px;margin:14px 0 6px}
+.big b{font:900 108px/.8 var(--f-head)}
+.big span{font:800 26px var(--f-head);color:var(--mute)}
+.kv4{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);margin:14px 0 18px}
+.kv4>div{padding:12px 14px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.kv4>div:nth-child(2n){border-right:0}
+.kv4>div:nth-last-child(-n+2){border-bottom:0}
+.kv4 b{font:500 15.5px/1.2 var(--f-mono)}
+.hero-copy{padding:26px 28px 6px}
+h1{font:900 clamp(44px,5.4vw,82px)/.88 var(--f-head);text-transform:uppercase;margin:0 0 14px;overflow-wrap:anywhere}
+h1 em{font-style:normal;color:var(--or-ink)}
+.hero-copy p{font-size:16.5px;color:var(--soft);margin:0;max-width:64ch}
+.mapwrap{padding:14px 18px 0}
+.netmap{display:block;width:100%;height:auto;border:1.5px solid var(--frame);background:var(--map)}
+.netmap .rail{stroke:var(--rail);stroke-width:2.4;fill:none}
+.netmap .tie{stroke:var(--map);stroke-width:1.2;stroke-dasharray:1 3;fill:none}
+.netmap .node{fill:var(--panel);stroke:var(--edge);stroke-width:1}
+.netmap .hub{fill:var(--or)}
+.netmap .nl{font:800 7.5px var(--f-head);fill:var(--ink);letter-spacing:.04em}
+.netmap .nc{font:500 5px var(--f-mono);fill:var(--soft)}
+.netmap .hl{font:900 8px var(--f-head);fill:#1A0A00;letter-spacing:.05em}
+.netmap .pix rect{fill:var(--ink)} .netmap .pix .o{fill:var(--or)} .netmap .pix .s{fill:var(--st)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;padding:14px 20px 4px;font:400 12px var(--f-mono);color:var(--soft)}
+.legend i{width:10px;height:10px;display:inline-block;margin-right:6px;vertical-align:-1px}
+.mapnote{font:400 12px var(--f-mono);color:var(--mute);padding:4px 20px 18px;margin:0}
+.kv2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.kv2>div{padding:14px 18px}
+.kv2>div+div{border-left:1px solid var(--rule)}
+.kv2 b{font:900 26px/1 var(--f-head);text-transform:uppercase;overflow-wrap:anywhere}
+.btnrow{display:flex;gap:12px;padding:18px;border-top:1px solid var(--rule)}
+.btnrow .btn{flex:1}
+.feed{display:grid;grid-template-columns:repeat(6,1fr)}
+.feed>div{padding:18px 14px;text-align:center;border-right:1px solid var(--rule)}
+.feed>div:last-child{border-right:0}
+.feed .pix{height:22px;width:auto;margin:0 auto 8px;display:block}
+.feed b{display:block;font:900 22px/1 var(--f-head)}
+.feed p{margin:4px 0 6px;font-size:13px;color:var(--soft);line-height:1.35}
+.ago{font:400 11px var(--f-mono);color:var(--mute);letter-spacing:.04em;text-transform:uppercase}
+.empty{padding:28px 20px;color:var(--soft);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.empty .trk{width:84px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr)}
+.steps>div{padding:20px 18px 24px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.steps>div:nth-child(4n){border-right:0}
+.steps>div:nth-last-child(-n+3){border-bottom:0}
+.steps .pix{height:24px;width:auto;margin-bottom:12px} .steps .trk{width:64px;margin-bottom:12px}
+.steps .n{display:block;font:500 11px var(--f-mono);color:var(--or-ink);margin-bottom:6px}
+.steps h3{margin:0 0 6px;font:800 24px/1 var(--f-head);text-transform:uppercase}
+.steps p{margin:0;color:var(--soft);font-size:14.5px}
+.mt{margin-top:16px}
+
+/* deploy */
+.grid-2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.step h3{font:900 36px/1 var(--f-head);text-transform:uppercase;margin:0 0 8px}
+.step p{margin:0 0 16px;color:var(--soft);max-width:68ch}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opt{text-align:left;border:1.5px solid var(--edge);background:var(--panel);padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.opt[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--or),4px 4px 0 var(--edge)}
+.opt .pix{height:22px;width:auto}
+.opt b{font:800 22px/1 var(--f-head);text-transform:uppercase;margin-top:6px}
+.opt>span{color:var(--soft);font-size:13px}
+.note{font-size:13.5px;color:var(--soft);margin:14px 0 0;padding-left:12px;border-left:3px solid var(--or)}
+.youget{display:flex;gap:18px;align-items:center;padding:18px}
+.youget .trk{width:150px;flex:none}
+.youget b{display:block;font:900 44px/1 var(--f-head)}
+.youget span{color:var(--soft);font-size:14px}
+.rows>div{display:flex;justify-content:space-between;gap:16px;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--rule)}
+.rows>div:last-child{border-bottom:0}
+.rows label{margin:0}
+.rows b{font:500 14px var(--f-mono);text-align:right}
+
+/* fleet / contracts */
+.kv5{display:grid;grid-template-columns:repeat(5,1fr)}
+.kv5>div{padding:16px 18px;border-right:1px solid var(--rule)}
+.kv5>div:last-child{border-right:0}
+.kv5 b{display:block;font:500 19px/1.2 var(--f-mono)}
+.kv5 b.g{color:var(--or-ink)}
+.actions{display:flex;flex-wrap:wrap;gap:12px;padding:18px;border-top:1px solid var(--rule)}
+.term{display:grid;grid-template-columns:160px minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--rule)}
+.term>div{padding:18px}
+.term>div+div{border-left:1px solid var(--rule)}
+.term h3{margin:0 0 8px;font:900 32px/1 var(--f-head);text-transform:uppercase;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:10px 0 14px}
+.stats b{display:block;font:500 14px var(--f-mono)}
+.vehs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.veh{padding:14px 16px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.veh .vh{display:flex;align-items:center;gap:10px}
+.veh .vh .pix{height:20px;width:auto}
+.veh h4{margin:0;font:800 19px/1 var(--f-head);text-transform:uppercase}
+.veh .st{font:400 12px var(--f-mono);color:var(--soft)}
+.veh .prog{height:8px;border:1.5px solid var(--edge);position:relative;overflow:hidden}
+.veh .prog i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--or) 0 6px,transparent 6px 8px)}
+.veh .btns{margin-top:auto}
+.cons{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.con{padding:16px 18px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:8px}
+.con .route{display:flex;align-items:center;gap:8px;font:800 20px/1 var(--f-head);text-transform:uppercase;flex-wrap:wrap}
+.con .route i{font-style:normal;color:var(--mute);font-family:var(--f-mono);font-size:14px}
+.con .route .pix{height:16px;width:auto}
+.con dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font:400 12px var(--f-mono)}
+.con dt{color:var(--mute)} .con dd{margin:0;text-align:right}
+.con .tags{display:flex;gap:6px;flex-wrap:wrap}
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--rule)}
+.calc>div{padding:18px}
+.calc>div+div{border-left:1px solid var(--rule);background:var(--stripe)}
+.calc input[type=range]{width:100%;accent-color:var(--or)}
+.calc .res{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calc .res div{border:1.5px solid var(--edge);padding:12px;background:var(--panel)}
+.calc .res b{display:block;font:900 30px/1 var(--f-head)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.up{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--rule)}
+.up:last-child{border-bottom:0}
+.up b{font:700 14.5px var(--f-ui)}
+.up small{grid-column:1;font-size:12.5px;color:var(--soft)}
+.up .btn,.up .seg{grid-row:1 / span 2;grid-column:2}
+.pips{display:inline-flex;gap:3px;margin-left:8px;vertical-align:1px}
+.pips i{width:9px;height:9px;border:1px solid var(--edge);display:inline-block}
+.pips i.on{background:var(--or)}
+.seg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg>span{font:400 11px var(--f-mono);color:var(--mute);letter-spacing:.05em;text-transform:uppercase;margin-right:4px}
+.filters{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;padding:16px 18px}
+
+/* how */
+.split{padding:22px 22px 6px}
+.squares{display:grid;grid-template-columns:repeat(50,1fr);gap:2px}
+.squares i{aspect-ratio:1;display:block}
+.sq-a{background:var(--or)} .sq-b{background:var(--st)} .sq-c{background:var(--ink)} .sq-d{background:var(--mute);opacity:.5}
+.splitkeys{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);margin-top:18px}
+.splitkeys>div{padding:16px 22px;border-right:1px solid var(--rule)}
+.splitkeys>div:last-child{border-right:0}
+.splitkeys .k{display:flex;gap:8px;align-items:center;font:700 15px var(--f-ui)}
+.splitkeys .k i{width:13px;height:13px;display:inline-block}
+.splitkeys b{display:block;font:900 56px/1 var(--f-head);margin:8px 0 4px}
+.splitkeys p{margin:0;color:var(--soft);font-size:14px}
+.fly{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--rule)}
+.fly>div{padding:16px;border-right:1px solid var(--rule)}
+.fly>div:last-child{border-right:0;background:var(--stripe)}
+.fly .n{font:500 12px var(--f-mono);color:var(--or-ink)}
+.fly b{display:block;font:800 19px/1.05 var(--f-head);text-transform:uppercase;margin:4px 0}
+.fly span{font-size:13px;color:var(--soft)}
+.pbody{padding:18px 22px}
+.pbody p{margin:0 0 10px;color:var(--soft)}
+.pbody p:last-child{margin:0}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{font:400 11px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);background:var(--stripe)}
+td{padding:12px 14px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-family:var(--f-mono)}
+td .pix{height:18px;width:auto;vertical-align:middle}
+.tw{overflow-x:auto}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* docs */
+.docs{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.toc ol{list-style:none;margin:0;padding:8px 18px 14px}
+.toc li button{display:flex;gap:14px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--rule);padding:10px 0;cursor:pointer;font-size:14.5px}
+.toc li button span{font:400 11px var(--f-mono);color:var(--mute);padding-top:3px}
+.doc{scroll-margin-top:16px}
+.doc .body{padding:20px 24px 24px;max-width:80ch}
+.doc .body p,.doc .body li{color:var(--soft)}
+.doc .body strong{color:var(--ink)}
+.doc .body h4{font:800 22px var(--f-head);text-transform:uppercase;margin:20px 0 6px}
+.doc code{font:400 12.5px var(--f-mono);background:var(--stripe);padding:2px 5px}
+.doc .tw{margin:12px 0;border:1px solid var(--rule)}
+details{border-bottom:1px solid var(--rule)}
+details summary{cursor:pointer;padding:13px 0;font-weight:700;list-style:none}
+details summary::before{content:"▸";display:inline-block;width:18px;font-size:12px}
+details[open] summary::before{content:"▾"}
+details p{margin:0 0 14px 18px}
+
+/* overlays */
+.scrim{position:fixed;inset:0;background:rgba(8,9,10,.65);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{max-width:640px;width:100%;max-height:calc(100% - 32px);overflow:auto;box-shadow:6px 6px 0 var(--or)}
+.x{margin-left:auto;background:none;border:0;font:700 18px var(--f-mono);cursor:pointer;padding:0 4px}
+.wlist{display:grid;gap:10px;padding:18px}
+.wopt{display:flex;align-items:center;gap:14px;border:1.5px solid var(--edge);background:var(--panel);padding:12px 14px;cursor:pointer;text-align:left;font:700 15px var(--f-ui);text-decoration:none}
+.wopt img,.wopt .ph-ico{width:28px;height:28px;flex:none}
+.wopt .ph-ico{background:var(--mute)}
+.wopt em{margin-left:auto;font:400 11px var(--f-mono);font-style:normal;color:var(--or-ink);text-transform:uppercase;letter-spacing:.05em}
+.wopt:hover{background:var(--stripe)}
+.wopt[disabled]{opacity:.4;cursor:not-allowed}
+.menu{position:absolute;right:18px;top:calc(100% - 4px);z-index:40;min-width:260px;box-shadow:4px 4px 0 var(--or)}
+.menu .rows>div{padding:12px 16px}
+.mitems{display:grid;border-top:1px solid var(--rule)}
+.mitems button,.mitems a{text-align:left;background:none;border:0;border-bottom:1px solid var(--rule);padding:12px 16px;cursor:pointer;font:600 14px var(--f-ui);text-decoration:none}
+.mitems>*:last-child{border-bottom:0}
+.toasts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:60;max-width:min(380px,calc(100% - 32px))}
+.toast{background:var(--ink);color:var(--bg);padding:12px 16px;font:600 14px var(--f-ui);box-shadow:4px 4px 0 var(--or)}
+footer{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;padding:22px 2px 36px;font-size:13px;color:var(--soft)}
+
+@media (max-width:1200px){
+  .grid-hero{grid-template-columns:minmax(0,1fr)}
+  .grid-hero>.hero{order:-1}
+  .grid-2{grid-template-columns:minmax(0,1fr)}
+  .feed{grid-template-columns:repeat(3,1fr)}
+  .feed>div:nth-child(3n){border-right:0}
+  .feed>div:nth-child(-n+3){border-bottom:1px solid var(--rule)}
+  .docs{grid-template-columns:minmax(0,1fr)}
+  .toc{position:static}
+  .kv5{grid-template-columns:repeat(3,1fr)}
+  .kv5>div:nth-child(3){border-right:0}
+  .kv5>div:nth-child(-n+3){border-bottom:1px solid var(--rule)}
+  .term{grid-template-columns:140px minmax(0,1fr)}
+  .term>div:last-child{grid-column:1 / -1;border-left:0;border-top:1px solid var(--rule)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .steps>div{border-right:1px solid var(--rule)!important;border-bottom:1px solid var(--rule)!important}
+  .steps>div:nth-child(2n){border-right:0!important}
+  .fly{grid-template-columns:repeat(3,1fr)}
+  .fly>div{border-bottom:1px solid var(--rule)}
+  .splitkeys{grid-template-columns:1fr 1fr}
+  .splitkeys>div{border-bottom:1px solid var(--rule)}
+}
+@media (max-width:1100px){
+  .nav{grid-template-columns:1fr auto}
+  .brand{border-right:0}
+  .tabs{grid-column:1 / -1;grid-row:2;display:flex;border-top:1px solid var(--rule)}
+  .tabs a{flex:1 0 92px}
+}
+@media (max-width:760px){
+  .hero-copy{padding:24px 20px 6px}
+  .netmap .nc{display:none}
+  .steps{grid-template-columns:minmax(0,1fr)}
+  .steps>div{border-right:0!important}
+  .calc{grid-template-columns:minmax(0,1fr)}
+  .calc>div+div{border-left:0;border-top:1px solid var(--rule)}
+  .opts{grid-template-columns:1fr 1fr}
+}
+@media (max-width:700px){
+  .wrap{padding:10px}
+  .two,.fly,.splitkeys{grid-template-columns:minmax(0,1fr)}
+  .fly>div,.splitkeys>div{border-right:0}
+  .feed{grid-template-columns:1fr 1fr}
+  .feed>div{border-bottom:1px solid var(--rule)}
+  .feed>div:nth-child(2n){border-right:0}
+  .feed>div:nth-child(3n){border-right:1px solid var(--rule)}
+  .feed>div:nth-child(6n){border-right:0}
+  .kv5{grid-template-columns:1fr 1fr}
+  .kv5>div{border-right:1px solid var(--rule)!important;border-bottom:1px solid var(--rule)}
+  .kv5>div:nth-child(2n){border-right:0!important}
+  .squares{grid-template-columns:repeat(25,1fr)}
+  .big b{font-size:82px}
+  .brand{padding:8px 12px;gap:8px}
+  .brand .trk{width:56px}
+  .brand b{font-size:25px}
+  .walletcell{padding:10px 12px}
+  .walletcell .btn{padding:9px 10px;font-size:12.5px;gap:7px}
+  .term{grid-template-columns:minmax(0,1fr)}
+  .term>div+div{border-left:0;border-top:1px solid var(--rule)}
+  .term .trk{max-width:150px}
+  .cons{grid-template-columns:minmax(0,1fr)}
+  .up{grid-template-columns:minmax(0,1fr)}
+  .up .btn,.up .seg{grid-row:auto;grid-column:1;justify-self:start;margin-top:6px}
+}
+@media (prefers-reduced-motion:reduce){
+  .netmap .mover{display:none}
+  .btn:active:not([disabled]){transform:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="sprites"></defs></svg>
+
+<div class="wrap">
+  <header class="top panel">
+    <div class="nav">
+      <a class="brand" href="#network" aria-label="Freight home">
+        <svg class="trk" viewBox="0 0 75 32" shape-rendering="crispEdges" aria-hidden="true"><use href="#tr"/></svg>
+        <span><b>Freight</b><small>$FREIGHT</small></span>
+      </a>
+      <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+      <div class="walletcell">
+        <button class="btn or" id="walletBtn" data-act="wallet" aria-haspopup="true"><i class="dot"></i><span>Connect wallet</span></button>
+        <div class="menu panel" id="walletMenu" hidden></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <footer>
+    <span>Freight. Move resources. Connect industries. Transport revenue.</span>
+    <span>All cargo and transport capacity are virtual. Revenue depends on actual platform demand and fees, not guaranteed returns.</span>
+  </footer>
+</div>
+
+<div id="overlay"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ---------- logo pixel grid ---------- */
+const TRUCK = ["....kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.......................", "....kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.......................", "..kkBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBkk..kkkkkkk..............", "..kkBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBkk..kkkkkkk..............", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkwwwwkkkkkkkk.......", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkkkkkkwwwwkkkkkkkk.......", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkkkkkksswskwwwwwwwkk.....", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kksssswwwwwwwwkk.....", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssssswwwwwwwkk.....", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkkkkkksssskk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkkkkkksssskk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkdddddkkddkk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkdddddkkddkk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkkkkkkkkkkkk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssskkkkkkkkkkkkk...", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssssssssssssss..dkk", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssssssssssssssssskk", "..kkBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNBBBNNNNBBBkk..kkssssssssssssskkkkkk", "..kkBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBkkkkkkssssssssssssskkkkkk", "..kkBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBkkkkkkssssssssssssskkYYkk", ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkksssskkkkkkssskkYYkk", "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddkkssskkkkkkkssskkkkkk", "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddkkssgkkkkkkkkswkkkkkk", "kkwwsskkkkwwwwkkkkkkkwwwkkkkksssssssssssssssskkkwwwwwwwwkkkkkwwwkkkkwwwsskk", "kkwwsskkkkwwwwkkkkkkkwwwkkkkksssssssssssssssskkkwwwwwwwwkkkkkwwwkkkkwwwsskk", "kkkkkkkkssddddskkkkssdddsskkkkkkkkkkkkkkkkkkkkkksssssssskkkssdddsskkkkkkkkk", "kkkkkkkkssddddskkkkssdddsskkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkssdddsskkkkkkkkk", "....kkkkssddddskkkkssdddsskkkk...............kkkkkkkkkkkkkkssdddsskkkk.....", "......kkkkwdwwkkkkkkkwwwkkkkk...........................kkkkkwwwskkkk......", "......kkkksswwkkkkkkkwwwkkkk............................kkkkkwwwkkkk.......", "........kkkkkkkk...kkkkkkk.................................kkkkkkk.........", "........kkkkkkkk...kkkkkkk.................................kkkkkkk........."];
+
+/* ---------- config ---------- */
+const DAY = 86400, HOUR = 3600;
+const CFG = {
+  RPC: 'https://api.mainnet-beta.solana.com', // swap for your own RPC (Helius, Triton…) when you deploy
+  X: 'https://x.com/FreightDotRent',
+  SUPPLY: 1000, MINT0: 0.25, MINT1: 1.25,
+  OPER: 0.50, FUND: 0.15, BURN: 0.20, OPS: 0.15,
+  HUB_FEE: 0.05, CONVOY: 0.10, FUEL_MULT: 50,
+  RENT_OWNER: 0.90, RENT_BURN: 0.10, BASE_RATE: 1 / 260,
+  PRICE0: 0.0000012, TOKEN_SUPPLY: 1e9,
+  START_T: 2 * DAY + 9 * HOUR,
+  OTHER_RATE: 3 / 1440
+};
+const VEH = [
+  { k: 'truck', name: 'Cargo Truck', fn: 'Delivers resources between nearby projects', cap: 500, h: 1, cost: 12, price: 6000, rule: 'Nearby routes only' },
+  { k: 'train', name: 'Freight Train', fn: 'Transports large quantities across the network', cap: 3000, h: 3, cost: 40, price: 18000, rule: 'Any route, carries heavy cargo' },
+  { k: 'ship', name: 'Container Ship', fn: 'Connects distant freight terminals', cap: 8000, h: 8, cost: 90, price: 30000, rule: 'Distant routes and Logistics only' },
+  { k: 'air', name: 'Cargo Aircraft', fn: 'Handles express deliveries', cap: 300, h: 0.5, cost: 30, price: 14000, rule: 'Any route, built for express' },
+  { k: 'heavy', name: 'Heavy Hauler', fn: 'Transports specialized industrial resources', cap: 1200, h: 2, cost: 35, price: 16000, rule: 'Any route, carries heavy cargo' },
+  { k: 'convoy', name: 'Autonomous Convoy', fn: 'Coordinates multiple freight vehicles', cap: 1500, h: 1.5, cost: 45, price: 24000, rule: `+${CFG.CONVOY * 100}% pay for every vehicle at its terminal` }
+];
+const V = Object.fromEntries(VEH.map(v => [v.k, v]));
+const VCOL = { truck: '#F26B1D', train: '#8DB3DB', ship: '#5B87B5', air: '#FFD24A', heavy: '#C2C8CF', convoy: '#FF8C42' };
+const INDS = [
+  { k: 'mine', name: 'Mining', cargo: 'Raw materials and minerals', a: -Math.PI / 2 },
+  { k: 'mfg', name: 'Manufacturing', cargo: 'Finished components', a: -Math.PI / 6 },
+  { k: 'energy', name: 'Energy', cargo: 'Fuel and power credits', a: Math.PI / 6 },
+  { k: 'log', name: 'Logistics', cargo: 'Containers and distribution capacity', a: Math.PI / 2 },
+  { k: 'bio', name: 'Biotechnology', cargo: 'Laboratory resources', a: 5 * Math.PI / 6 },
+  { k: 'agri', name: 'Agriculture', cargo: 'Crops and supplies', a: 7 * Math.PI / 6 }
+];
+const I = Object.fromEntries(INDS.map(x => [x.k, x]));
+const DURS = [{ h: 1, name: '1 hour', off: 0 }, { h: 24, name: '1 day', off: 0.10 }, { h: 168, name: '1 week', off: 0.25 }];
+const NARR = { a: ['Capybara','Frog','Goose','Hamster','Penguin','Raccoon','Otter','Pigeon','Axolotl','Walrus','Cargo','Diesel','Piston','Crate','Pallet','Depot','Rail','Haul','Dock','Gear'], b: ['Council','Summer','Club','Rally','Express','Lines','Freight','Haul','Cargo','Depot','Yard','Works','Union','Crew','Corp','Port','Route','Hub','Run','Lane'] };
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r = Math.random){ let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const pick = (arr, r = Math.random) => arr[Math.floor(r() * arr.length)];
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const fmtSol = x => { x = +x || 0; return x >= 100 ? x.toFixed(1) : x >= 1 ? x.toFixed(2) : x >= 0.01 ? x.toFixed(3) : x > 0 ? x.toFixed(4) : '0'; };
+const fmtTok = x => { x = +x || 0; if (x >= 1e9) return (x/1e9).toFixed(2) + 'B'; if (x >= 1e6) return (x/1e6).toFixed(x >= 1e7 ? 1 : 2) + 'M'; if (x >= 1e3) return (x/1e3).toFixed(x >= 1e4 ? 0 : 1) + 'k'; return Math.round(x) + ''; };
+const pad2 = n => String(n).padStart(2, '0');
+function ago(t){ const s = S.t - t; if (s < 60) return 'just now'; if (s < HOUR) return Math.floor(s / 60) + ' min ago'; if (s < DAY) return `${Math.floor(s / HOUR)} h ${Math.floor(s % HOUR / 60)} min ago`; return Math.floor(s / DAY) + ' d ago'; }
+function left(t){ const s = Math.max(0, t - S.t); if (s < HOUR) return Math.max(1, Math.ceil(s / 60)) + ' min'; if (s < DAY) return `${Math.floor(s / HOUR)} h ${Math.floor(s % HOUR / 60)} min`; return `${Math.floor(s / DAY)} d ${Math.floor(s % DAY / HOUR)} h`; }
+const short = a => a ? a.slice(0, 4) + '…' + a.slice(-4) : '';
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const randAddr = r => Array.from({ length: 44 }, () => B58[Math.floor(r() * 58)]).join('');
+const mintPrice = n => CFG.MINT0 + (CFG.MINT1 - CFG.MINT0) * (Math.min(n, CFG.SUPPLY) - 1) / (CFG.SUPPLY - 1);
+const price = () => CFG.PRICE0 * (1 + S.burned / CFG.TOKEN_SUPPLY * 40);
+const r50 = x => Math.max(50, Math.round(x / 50) * 50);
+const dist = (a, b) => { const d = Math.abs(INDS.findIndex(x => x.k === a) - INDS.findIndex(x => x.k === b)); return Math.min(d, 6 - d) / 3; };
+const garage = t => 2 + 2 * t.lvl;
+const vRent = v => r50(V[v.type].price / 40);
+
+/* ---------- sprites ---------- */
+(function(){
+  const pal = { k: '#141414', w: '#F0F0F0', s: '#CDCDCD', g: '#737373', d: '#3E4042', B: '#5C87B4', N: '#284260', Y: '#F0C828' };
+  let r = ''; TRUCK.forEach((row, y) => { let x = 0; while (x < row.length) { const ch = row[x]; if (pal[ch]) { const s = x; while (x < row.length && row[x] === ch) x++; r += `<rect x="${s}" y="${y}" width="${x - s}" height="1" fill="${pal[ch]}"/>`; } else x++; } });
+  document.getElementById('sprites').innerHTML = `<g id="tr">${r}</g>`;
+})();
+const truckSVG = (extra = '') => `<svg class="trk" viewBox="0 0 75 32" shape-rendering="crispEdges" role="img" aria-label="Freight truck"><use href="#tr"/>${extra}</svg>`;
+function termArt(t){ let extra = ''; for (let i = 0; i < 3; i++) extra += `<rect x="${2 + i * 6}" y="0" width="5" height="2" fill="${i < t.lvl ? '#F26B1D' : '#444B54'}"/>`; return truckSVG(extra); }
+function pix(rows){
+  const h = rows.length, w = Math.max(...rows.map(r => r.length)); let r = '';
+  rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === '#') r += `<rect x="${x}" y="${y}" width="1" height="1"/>`; else if (c === 'o') r += `<rect class="o" x="${x}" y="${y}" width="1" height="1"/>`; else if (c === 's') r += `<rect class="s" x="${x}" y="${y}" width="1" height="1"/>`; }));
+  return `<svg class="pix" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
+const VICO = {
+  truck: pix(['#######....','#sssss#.##.','#sssss####.','###########','.#o#...#o#.']),
+  train: pix(['....##.......','.######.#####','########sssss','#############','.#o#o#..#o#o.']),
+  ship: pix(['.....#.....','...#####...','..#s#o#s#..','###########','.#########.','..#######..']),
+  air: pix(['....#......','....##.....','###########','....##..##.','....#......']),
+  heavy: pix(['##........','####.#####','##########','##########','.#o#.#o#o#']),
+  convoy: pix(['###.###.###','#s#.#s#.#s#','###########','.o...o...o.'])
+};
+const IICO = {
+  mine: pix(['...#...','..###..','.#ooo#.','#ooooo#','#######']),
+  mfg: pix(['#..#..#','##.##.#','#######','#o#o#o#','#######']),
+  energy: pix(['...oo..','..oo...','.oooo..','...oo..','..oo...']),
+  log: pix(['#######','#s#s#s#','#######','#s#s#s#','#######']),
+  bio: pix(['..#.#..','.#o#o#.','..#o#..','.#o#o#.','..#.#..']),
+  agri: pix(['.o.o.o.','..o.o..','.o.o.o.','...#...','#######'])
+};
+const ICO = {
+  network: pix(['#...#...#','.#..#..#.','..#####..','###oOo###'.replace('O','o'),'..#####..','.#..#..#.','#...#...#']),
+  deploy: pix(['#######','#.....#','#.ooo.#','#.ooo.#','#######']),
+  fleet: VICO.truck,
+  contracts: pix(['######.','#....##','#.oo..#','#.....#','#.ooo.#','#.....#','#######']),
+  depot: pix(['...#...','..###..','.#####.','##ooo##','##o.o##','#######']),
+  rent: pix(['.###.....','#...#....','#.o.#####','#...#.#.#','.###.....']),
+  how: pix(['###...###','#o##.##o#','#..#.#..#','#.##.##.#','#..#.#..#','###.#.###']),
+  docs: pix(['######..','#....##.','#.oo..##','#......#','#.####.#','#......#','#.####.#','########']),
+  coin: pix(['..###..','.#ooo#.','#oo#oo#','#o###o#','#oo#oo#','.#ooo#.','..###..'])
+};
+
+/* ---------- state ---------- */
+const KEY = 'freight-state-v1', KEYW = 'freight-wallet-v1';
+let S, tById = new Map(), vById = new Map();
+function reindex(){ tById = new Map(S.terms.map(t => [t.id, t])); vById = new Map(S.vehs.map(v => [v.id, v])); }
+function feedPush(x){ x.t = S.t; S.feed.unshift(x); if (S.feed.length > 60) S.feed.length = 60; }
+const vehsOf = t => S.vehs.filter(v => v.term === t.id);
+const hasConvoy = t => vehsOf(t).some(v => v.type === 'convoy');
+const supplied = t => t.sup && t.sup > S.t;
+const hourly = t => t.rv / Math.max(6, Math.min(168, (S.t - t.t) / HOUR));
+
+function newVeh(type, owner, user, term){ const v = { id: S.nextVeh++, type, owner, user, term: term ? term.id : null, job: null, rl: null, rent: null, earned: 0, trips: 0, t: S.t }; S.vehs.push(v); vById.set(v.id, v); return v; }
+function addOther(r){
+  const n = S.terms.length + 1; if (n > CFG.SUPPLY) return null;
+  const fee = mintPrice(n), owner = randAddr(r);
+  const t = { id: n, owner, user: false, ind: pick(INDS, r).k, lvl: 1 + (r() < 0.4 ? 1 : 0) + (r() < 0.12 ? 1 : 0), live: 0, count: 0, unclaimed: 0, own: 0, rv: 0, auto: true, sup: 0, t: S.t };
+  S.terms.push(t); tById.set(t.id, t);
+  newVeh('truck', owner, false, t);
+  const extras = Math.floor(r() * (garage(t) - 1));
+  for (let i = 0; i < extras; i++) newVeh(pick(['truck', 'train', 'train', 'air', 'heavy', 'ship', 'convoy'], r), owner, false, t);
+  S.burnSol += fee * 0.5; S.burned += fee * 0.5 / price(); S.ops += fee * 0.5;
+  return t;
+}
+function addLooseRental(r){
+  const v = newVeh(pick(['truck', 'train', 'air', 'heavy', 'ship', 'convoy'], r), randAddr(r), false, null);
+  v.rl = { price: r50(vRent(v) * (0.8 + r() * 0.5)), share: pick([0.1, 0.2, 0.3], r) };
+}
+function eligible(v, c){
+  const T = V[v.type], d = dist(c.from, c.to);
+  if (c.heavy && !['train', 'heavy', 'ship'].includes(v.type)) return { ok: false, why: 'Needs a train, heavy hauler or ship' };
+  if (v.type === 'truck' && d > 0.67) return { ok: false, why: 'Too far for a truck' };
+  if (v.type === 'ship' && d < 0.9 && c.from !== 'log' && c.to !== 'log') return { ok: false, why: 'Ships need a distant or Logistics route' };
+  const trips = Math.ceil(c.units / T.cap), dur = trips * T.h * (0.6 + d) * HOUR;
+  if (S.t + dur > c.deadline) return { ok: false, why: 'Can’t make the deadline', trips, dur };
+  return { ok: true, trips, dur, fuel: trips * T.cost * CFG.FUEL_MULT };
+}
+function newContract(r = Math.random, poster = null, from = null, to = null, units = null){
+  const a = from || pick(INDS, r).k; let b = to || pick(INDS, r).k; if (b === a) b = INDS[(INDS.findIndex(x => x.k === a) + 1 + Math.floor(r() * 5)) % 6].k;
+  const d = dist(a, b), express = !poster && r() < 0.2, heavy = !poster && (a === 'mine' || a === 'energy') && r() < 0.5;
+  const u = units || r50([300, 500, 800, 1200, 1500, 2500, 4000, 6000][Math.floor(r() * r() * 8)]);
+  const pay = 0.004 * (u / 500) ** 0.8 * (0.6 + d) * (express ? 1.6 : 1) * (heavy ? 1.3 : 1);
+  if (!poster) { if (S.fund < pay) return null; S.fund -= pay; }
+  const hubs = S.terms.filter(t => t.ind === 'log' || t.lvl >= 2);
+  const c = { id: S.nextCon++, from: a, to: b, units: u, pay, express, heavy, deadline: S.t + (express ? 2 : 8 + r() * 10) * HOUR, status: 'open', veh: null, hub: hubs.length ? pick(hubs, r).id : null, poster, t: S.t };
+  S.cons.push(c); S.ver++;
+  return c;
+}
+function accept(v, c){
+  const e = eligible(v, c); if (!e.ok) return false;
+  const tt = v.term ? tById.get(v.term) : null;
+  if (tt && isMine(tt)) { if (S.wal.frt < e.fuel) return false; S.wal.frt -= e.fuel; }
+  S.burned += e.fuel * 0.5;
+  c.status = 'active'; c.veh = v.id; c.start = S.t; c.until = S.t + e.dur; v.job = { c: c.id, start: S.t, until: c.until };
+  S.ver++; return true;
+}
+function complete(c){
+  const v = vById.get(c.veh); c.status = 'done'; c.done = S.t; S.deliveries++; S.moved += c.units;
+  const t = v && v.term ? tById.get(v.term) : null;
+  let pay = c.pay;
+  const hub = c.hub ? tById.get(c.hub) : null;
+  if (hub) { const hf = pay * CFG.HUB_FEE; pay -= hf; hub.unclaimed += hf; hub.handled = (hub.handled || 0) + hf; if (isMine(hub) && S.speed <= 60) toast(`Terminal #${hub.id} earned ${fmtSol(hf)} SOL handling cargo`); }
+  if (t && hasConvoy(t)) pay *= 1 + CFG.CONVOY;
+  if (v) { v.job = null; v.trips++; v.earned += pay;
+    if (v.rent && v.rent.user) { const cut = pay * v.rent.share; pay -= cut; }
+    if (t) { t.unclaimed += pay; t.own += pay; t.rv += pay; }
+  }
+  feedPush({ k: 'deliver', from: c.from, to: c.to, units: c.units, veh: v ? v.type : 'truck', term: t ? t.id : 0 });
+  if (c.poster) { const pt = tById.get(c.poster); if (pt) { pt.sup = S.t + 12 * HOUR; if (isMine(pt)) toast(`Your contract was delivered. Terminal #${pt.id} is supplied: +15% coin output for 12 hours.`); } }
+  if (v && (v.user || (v.rent && v.rent.user)) && t && isMine(t) && S.speed <= 60) toast(`${V[v.type].name} #${v.id} delivered ${c.units.toLocaleString('en-US')} units ${I[c.from].name} → ${I[c.to].name}`);
+  S.ver++;
+}
+function launch(t){
+  const a = pick(NARR.a), b = pick(NARR.b);
+  const c = { id: S.nextCoin++, term: t.id, tick: (a.slice(0, 4) + b.slice(0, 1 + Math.floor(Math.random() * 3))).toUpperCase(), t0: S.t, F: Math.exp(Math.log(0.07) + 1.3 * gauss()) * (supplied(t) ? 1.15 : 1), L: Math.exp(Math.log(120) + 0.9 * gauss()), fees: 0, alive: true, grad: false };
+  c.gradAt = c.F > 5 ? c.F * 0.3 : -1;
+  S.coins.push(c); t.live++; t.count++; S.launches++;
+  feedPush({ k: 'launch', term: t.id, tick: c.tick, ind: t.ind }); S.ver++;
+  if (isMine(t) && S.speed <= 60) toast(`Terminal #${t.id} launched $${c.tick}`);
+}
+function pay(c, fee){
+  c.fees += fee;
+  S.burnSol += fee * CFG.BURN; S.burned += fee * CFG.BURN / price(); S.ops += fee * CFG.OPS; S.fund += fee * CFG.FUND;
+  const t = tById.get(c.term); if (!t) return;
+  const op = fee * CFG.OPER; t.unclaimed += op; t.own += op; t.rv += op;
+}
+function step(dm){
+  const t0 = S.t; S.t += dm * 60;
+  if (S.terms.length < CFG.SUPPLY && Math.random() < dm * CFG.OTHER_RATE) { addOther(Math.random); S.ver++; }
+  if (Math.random() < dm / 200 && S.vehs.filter(v => !v.user && !v.term && v.rl).length < 10) addLooseRental(Math.random);
+  if (Math.random() < dm / 14 && S.cons.filter(c => c.status === 'open').length < 14) newContract();
+  for (const c of S.cons) {
+    if (c.status === 'active' && S.t >= c.until) complete(c);
+    else if (c.status === 'open' && S.t > c.deadline) { c.status = 'expired'; if (!c.poster) S.fund += c.pay; else { const pt = tById.get(c.poster); if (pt && isMine(pt)) { S.wal.sol += c.pay; toast('Your contract expired unfilled. Its payment was refunded.'); } } S.ver++; }
+  }
+  for (const t of S.terms) {
+    if (t.live < 1 + t.lvl && Math.random() < dm * CFG.BASE_RATE * (isMine(t) && !t.count ? 6 : 1)) launch(t);
+    if (!t.user || t.auto !== false) {
+      for (const v of vehsOf(t)) {
+        if (v.job || (v.rent && !v.rent.user && t.user)) continue;
+        if (Math.random() > dm / 25) continue;
+        const open = S.cons.filter(c => c.status === 'open' && (isMine(t) || S.t - c.t > 45 * 60)).map(c => ({ c, e: eligible(v, c) })).filter(x => x.e.ok && (!isMine(t) || S.wal.frt >= x.e.fuel)).sort((x, y) => y.c.pay / y.e.dur - x.c.pay / x.e.dur);
+        if (open.length) accept(v, open[0].c);
+      }
+    }
+  }
+  for (const v of S.vehs) {
+    if (isMine(v) && v.rl && !v.rent && !v.term && !v.job && Math.random() < dm / 500) {
+      const d = pick(DURS), cost = v.rl.price * d.h * (1 - d.off);
+      v.rent = { who: randAddr(Math.random), user: false, until: S.t + d.h * HOUR, share: v.rl.share }; S.wal.frt += cost * CFG.RENT_OWNER; S.burned += cost * CFG.RENT_BURN;
+      toast(`${V[v.type].name} #${v.id} rented for ${d.name}: +${fmtTok(cost * CFG.RENT_OWNER)} $FREIGHT`); S.ver++;
+    }
+    if (isMine(v) && v.rent && !v.rent.user) S.vehUn += dm / 60 * 0.002 * v.rl.share * V[v.type].cap / 500;
+    if (v.rent && S.t >= v.rent.until) {
+      if (v.rent.user) { if (v.term) toast(`Your rental of ${V[v.type].name} #${v.id} ended`); if (!v.job) v.term = null; }
+      if (!v.job) { v.rent = null; S.ver++; }
+    }
+  }
+  for (const c of S.coins) {
+    if (!c.alive) continue;
+    const a0 = Math.max(0, (t0 - c.t0) / 60), a1 = Math.max(0, (S.t - c.t0) / 60);
+    const fee = c.F * (Math.exp(-a0 / c.L) - Math.exp(-a1 / c.L));
+    if (fee > 0) pay(c, fee);
+    if (!c.grad && c.gradAt > 0 && c.fees >= c.gradAt) { c.grad = true; S.ver++; }
+    if (a1 > 3 * c.L) { c.alive = false; const t = tById.get(c.term); if (t) t.live = Math.max(0, t.live - 1); S.ver++; }
+  }
+  const decay = Math.exp(-dm * 60 / (7 * DAY)); for (const t of S.terms) t.rv *= decay;
+  if (Math.floor(S.t / HOUR) !== Math.floor(t0 / HOUR)) {
+    S.coins = S.coins.filter(c => c.alive || c.grad || c.t0 > S.t - 10 * HOUR || tById.get(c.term)?.user);
+    S.cons = S.cons.filter(c => c.status === 'open' || c.status === 'active' || (c.done && c.done > S.t - 6 * HOUR) || c.poster);
+  }
+}
+function advance(minutes){ while (minutes > 0) { const d = Math.min(5, minutes); step(d); minutes -= d; } }
+function newWorld(){
+  S = { v: 1, t: CFG.START_T - 2 * DAY, speed: 60, terms: [], vehs: [], cons: [], coins: [], feed: [], fund: 1.5, burned: 0, burnSol: 0, ops: 0, launches: 0, deliveries: 0, moved: 0, vehUn: 0, wal: { sol: 30, frt: 200000 }, nextVeh: 1, nextCon: 1, nextCoin: 1, ver: 0 };
+  tById = new Map(); vById = new Map();
+  const r = mulberry(157);
+  for (let i = 0; i < 32; i++) addOther(r);
+  for (let i = 0; i < 7; i++) addLooseRental(r);
+  advance(2 * 24 * 60);
+  S.feed = S.feed.slice(0, 40);
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load(){
+  try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw); if (s && s.v === 1 && Array.isArray(s.terms)) { S = s; reindex(); return; } } } catch (e) {}
+  newWorld();
+}
+
+/* ---------- wallet (Wallet Standard + injected providers, validated with @solana/web3.js) ---------- */
+const W = { list: [], addr: null, name: null, entry: null, kind: null, balance: null };
+const isMine = x => !!(x && x.user && W.addr && x.owner === W.addr);
+const isRenting = v => !!(v && v.rent && v.rent.user && W.addr && v.rent.who === W.addr);
+const usable = v => (isMine(v) && !(v.rent && !v.rent.user)) || isRenting(v);
+function addWallet(x){ if (!W.list.some(w => w.name.toLowerCase() === x.name.toLowerCase())) W.list.push(x); }
+const wsApi = { register: (...ws) => { ws.forEach(w => { try { if (w.features && w.features['standard:connect'] && (w.chains || []).some(c => String(c).startsWith('solana:'))) addWallet({ name: w.name, icon: w.icon, kind: 'standard', w }); } catch (e) {} }); return () => {}; } };
+try {
+  window.addEventListener('wallet-standard:register-wallet', ev => { try { ev.detail(wsApi); } catch (e) {} });
+  window.dispatchEvent(new CustomEvent('wallet-standard:app-ready', { detail: wsApi }));
+} catch (e) {}
+function detectInjected(){
+  const c = [['Phantom', window.phantom && window.phantom.solana], ['Solflare', window.solflare], ['Backpack', window.backpack], ['Solana wallet', window.solana]];
+  for (const [n, p] of c) {
+    if (!p || typeof p.connect !== 'function') continue;
+    const name = p.isPhantom ? 'Phantom' : p.isSolflare ? 'Solflare' : n;
+    if (!W.list.some(w => w.name.toLowerCase().startsWith(name.toLowerCase()))) addWallet({ name, icon: null, kind: 'injected', p });
+  }
+}
+function validAddr(a){
+  try { if (window.solanaWeb3 && solanaWeb3.PublicKey) return new solanaWeb3.PublicKey(a).toBase58(); } catch (e) { return null; }
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a) ? a : null;
+}
+async function connectEntry(entry, silent){
+  let addr = null;
+  if (entry.kind === 'standard') {
+    const w = entry.w;
+    if (silent) { if (w.accounts && w.accounts.length) addr = w.accounts[0].address; else return false; }
+    else { const r = await w.features['standard:connect'].connect(); const acc = (r && r.accounts && r.accounts.length ? r.accounts : w.accounts)[0]; addr = acc && acc.address; }
+    try { w.features['standard:events'] && w.features['standard:events'].on('change', ({ accounts }) => { if (accounts && accounts.length) setWallet(accounts[0].address, entry); else clearWallet(); }); } catch (e) {}
+  } else {
+    const p = entry.p;
+    const r = await p.connect(silent ? { onlyIfTrusted: true } : undefined);
+    const pk = (r && r.publicKey) || p.publicKey; addr = pk && pk.toString();
+    try { p.on && p.on('accountChanged', pk => { if (pk) setWallet(pk.toString(), entry); else clearWallet(); }); } catch (e) {}
+  }
+  if (!addr) throw new Error('The wallet returned no account.');
+  setWallet(addr, entry);
+  return true;
+}
+function setWallet(addr, entry){
+  const ok = validAddr(addr);
+  if (!ok) { toast('That wallet returned an invalid Solana address.'); return; }
+  W.addr = ok; W.name = entry ? entry.name : 'Guest wallet'; W.entry = entry || null; W.kind = entry ? entry.kind : 'guest'; W.balance = null;
+  try { localStorage.setItem(KEYW, JSON.stringify({ name: W.name, kind: W.kind, addr: W.kind === 'guest' ? W.addr : null })); } catch (e) {}
+  for (const t of S.terms) if (t.user) t.owner = W.addr;
+  for (const v of S.vehs) { if (v.user) v.owner = W.addr; if (v.rent && v.rent.user) v.rent.who = W.addr; }
+  paintWallet(); S.ver++; render(true);
+  if (W.kind !== 'guest') fetchBalance();
+}
+async function fetchBalance(){
+  if (!window.solanaWeb3 || !W.addr) return;
+  try {
+    const conn = new solanaWeb3.Connection(CFG.RPC, 'confirmed');
+    const lamports = await Promise.race([conn.getBalance(new solanaWeb3.PublicKey(W.addr)), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))]);
+    W.balance = lamports / solanaWeb3.LAMPORTS_PER_SOL;
+  } catch (e) { W.balance = 'unavailable'; }
+  paintWallet();
+}
+async function clearWallet(){
+  const e = W.entry;
+  try { if (e && e.kind === 'standard' && e.w.features['standard:disconnect']) await e.w.features['standard:disconnect'].disconnect(); if (e && e.kind === 'injected' && e.p.disconnect) await e.p.disconnect(); } catch (err) {}
+  Object.assign(W, { addr: null, name: null, entry: null, kind: null, balance: null });
+  try { localStorage.removeItem(KEYW); } catch (err) {}
+  $('#walletMenu').hidden = true; paintWallet(); S.ver++; render(true);
+}
+function paintWallet(){
+  const b = $('#walletBtn');
+  if (W.addr) { b.className = 'btn connected'; b.innerHTML = `<i class="dot"></i><span>${short(W.addr)}</span>`; b.setAttribute('aria-label', `Wallet ${W.addr}, open menu`); }
+  else { b.className = 'btn or'; b.innerHTML = `<i class="dot"></i><span>Connect wallet</span>`; b.setAttribute('aria-label', 'Connect wallet'); }
+  if (W.addr) {
+    const bal = W.kind === 'guest' ? fmtSol(S.wal.sol) + ' SOL' : W.balance == null ? 'Checking…' : W.balance === 'unavailable' ? 'Unavailable' : fmtSol(W.balance) + ' SOL';
+    $('#walletMenu').innerHTML = `<div class="rows"><div><label>Wallet</label><b>${esc(W.name)}</b></div><div><label>Address</label><b>${short(W.addr)}</b></div><div><label>Balance</label><b>${bal}</b></div><div><label>$FREIGHT</label><b>${fmtTok(S.wal.frt)}</b></div></div>
+      <div class="mitems"><button data-act="copyAddr">Copy address</button>${W.kind !== 'guest' ? `<a href="https://solscan.io/account/${W.addr}" target="_blank" rel="noopener">View on Solscan</a>` : ''}<button data-act="disconnect">Disconnect</button></div>`;
+  }
+}
+function openWalletModal(){
+  detectInjected();
+  const items = W.list.map((w, i) => `<button class="wopt" data-act="pickWallet" data-i="${i}">${w.icon ? `<img src="${esc(w.icon)}" alt="">` : `<span class="ph-ico"></span>`}<span>${esc(w.name)}</span><em>Detected</em></button>`).join('');
+  modal(`<section class="panel modal" role="dialog" aria-modal="true" aria-labelledby="wt">
+    <h2 class="ph" id="wt">${ICO.deploy} Connect a Solana wallet <button class="x" data-act="close" aria-label="Close">×</button></h2>
+    <div class="wlist">
+      ${items || `<p class="small" style="margin:0">No Solana wallet found in this browser. Install one, then reload this page.</p>
+        <a class="wopt" href="https://phantom.app/download" target="_blank" rel="noopener"><span class="ph-ico"></span>Get Phantom</a>
+        <a class="wopt" href="https://solflare.com/download" target="_blank" rel="noopener"><span class="ph-ico"></span>Get Solflare</a>
+        <a class="wopt" href="https://backpack.app/downloads" target="_blank" rel="noopener"><span class="ph-ico"></span>Get Backpack</a>`}
+      <button class="wopt" data-act="guestWallet"><span class="ph-ico" style="background:var(--or)"></span><span>Continue as guest</span></button>
+      <p class="small" style="margin:4px 0 0">Connecting shares your public address only.</p>
+    </div></section>`);
+}
+async function eagerConnect(){
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(KEYW) || 'null'); } catch (e) {}
+  if (!saved) return;
+  if (saved.kind === 'guest' && saved.addr) { setWallet(saved.addr, null); return; }
+  detectInjected();
+  const entry = W.list.find(w => w.name === saved.name);
+  if (entry) { try { await connectEntry(entry, true); } catch (e) {} }
+}
+
+/* ---------- the network map ---------- */
+const NODE = k => { const x = INDS.find(i => i.k === k); return [170 + 122 * Math.cos(x.a), 100 + 74 * Math.sin(x.a)]; };
+function mapSVG(){
+  const open = S.cons.filter(c => c.status === 'open'), active = S.cons.filter(c => c.status === 'active').slice(0, 14);
+  let s = `<svg class="netmap" viewBox="0 0 340 200" shape-rendering="geometricPrecision" role="img" aria-label="The freight logistics network: six industries connected through central terminals; moving markers are live deliveries.">`;
+  INDS.forEach(x => { const [nx, ny] = NODE(x.k); s += `<line class="rail" x1="${nx}" y1="${ny}" x2="170" y2="100"/><line class="tie" x1="${nx}" y1="${ny}" x2="170" y2="100"/>`; });
+  INDS.forEach((x, i) => { const [ax, ay] = NODE(x.k), [bx, by] = NODE(INDS[(i + 1) % 6].k); s += `<line class="rail" x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" opacity=".55"/>`; });
+  active.forEach((c, i) => {
+    const [ax, ay] = NODE(c.from), [bx, by] = NODE(c.to), v = vById.get(c.veh), d = dist(c.from, c.to);
+    const path = d <= 0.34 ? `M${ax} ${ay} L${bx} ${by}` : `M${ax} ${ay} L170 100 L${bx} ${by}`;
+    const dur = (6 + 10 * d) * (v ? Math.max(0.5, V[v.type].h / 2) : 1), p = clamp((S.t - c.start) / (c.until - c.start), 0, 1);
+    s += `<g class="mover"><rect x="-3.5" y="-2.5" width="7" height="5" fill="${VCOL[v ? v.type : 'truck']}" stroke="#141414" stroke-width=".8"><animateMotion dur="${dur.toFixed(1)}s" begin="${(-p * dur).toFixed(1)}s" repeatCount="indefinite" path="${path}"/></rect></g>`;
+  });
+  s += `<rect x="142" y="88" width="56" height="24" class="hub"/><text class="hl" x="170" y="98" text-anchor="middle" textLength="46" lengthAdjust="spacingAndGlyphs">TERMINALS</text><text class="hl" x="170" y="107" text-anchor="middle" style="font-size:6px">${S.terms.length} HUBS</text>`;
+  INDS.forEach(x => {
+    const [nx, ny] = NODE(x.k), n = open.filter(c => c.from === x.k).length;
+    s += `<g><rect class="node" x="${nx - 38}" y="${ny - 13}" width="76" height="26"/><g transform="translate(${nx - 34} ${ny - 9}) scale(1.4)">${IICO[x.k].replace(/<svg[^>]*>|<\/svg>/g, '').replace(/<rect /g, '<rect style="fill:var(--ink)" ').replace(/style="fill:var\(--ink\)" class="o"/g, 'style="fill:var(--or)"').replace(/style="fill:var\(--ink\)" class="s"/g, 'style="fill:var(--st)"')}</g><text class="nl" x="${nx - 22}" y="${ny - 1}" textLength="${Math.min(56, x.name.length * 4.6)}" lengthAdjust="spacingAndGlyphs">${x.name.toUpperCase()}</text><text class="nc" x="${nx - 22}" y="${ny + 7}">${n} open</text></g>`;
+  });
+  return s + '</svg>';
+}
+
+/* ---------- views ---------- */
+const TABS = [['network','Network',ICO.network],['deploy','Deploy',ICO.deploy],['fleet','My fleet',ICO.fleet],['contracts','Contracts',ICO.contracts],['depot','Depot',ICO.depot],['rentals','Rentals',ICO.rent],['how','How it works',ICO.how],['docs','Docs',ICO.docs]];
+let tab = 'network';
+const D = { ind: 'mine' };
+const M = { dur: 1, filter: 'all' };
+const CALC = { type: 'truck', units: 500 };
+const POST = { from: 'mine', units: 1500 };
+const myTerms = () => W.addr ? S.terms.filter(isMine) : [];
+const myVehs = () => W.addr ? S.vehs.filter(v => isMine(v) || isRenting(v)) : [];
+const unTotal = () => myTerms().reduce((a, t) => a + t.unclaimed, 0) + (W.addr ? S.vehUn : 0);
+const LIVE = {
+  burned: () => fmtTok(S.burned),
+  un: id => fmtSol(tById.get(+id)?.unclaimed) + ' SOL',
+  myUn: () => fmtSol(unTotal()) + ' SOL',
+  claimAll: () => 'Collect all · ' + fmtSol(unTotal()) + ' SOL',
+  ago: t => ago(+t),
+  left: t => left(+t)
+};
+function kv(label, val, k){ return `<div><label>${label}</label><b${k ? ` data-k="${k}"` : ''}>${val}</b></div>`; }
+
+let latestSnap = null, latestAt = 0;
+function vNetwork(){
+  const n = S.terms.length, nowR = performance.now();
+  if (!latestSnap || nowR - latestAt > 30000) { latestSnap = S.feed.filter(f => f.k === 'deliver').slice(0, 6); latestAt = nowR; }
+  return `<div class="grid-hero"><div class="col">
+  <section class="panel">
+    <h2 class="ph">${ICO.network} Status <small>the network right now</small></h2>
+    <div class="pad">
+      <label>Freight terminals</label>
+      <div class="big"><b>${n}</b><span>/ ${CFG.SUPPLY.toLocaleString('en-US')}</span></div>
+      <div class="kv4">
+        ${kv('Terminal price', fmtSol(mintPrice(n + 1)) + ' SOL')}
+        ${kv('Vehicles', S.vehs.length)}
+        ${kv('Open contracts', S.cons.filter(c => c.status === 'open').length)}
+        ${kv('$FREIGHT burned', fmtTok(S.burned), 'burned')}
+      </div>
+      <button class="btn or wide" data-go="deploy">Establish a terminal</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2 class="ph">${ICO.coin} $FREIGHT <small>token</small></h2>
+    <div class="kv2"><div><label>Project</label><b>Freight</b></div><div><label>Ticker</label><b>$FREIGHT</b></div></div>
+    ${CFG.X ? `<div class="btnrow"><a class="btn" href="${esc(CFG.X)}" target="_blank" rel="noopener">Follow @FreightDotRent on X</a></div>` : ''}
+  </section>
+  </div>
+  <section class="panel hero">
+    <h2 class="ph">${ICO.network} The freight logistics network <small>live deliveries between industries</small></h2>
+    <div class="hero-copy">
+      <h1>Move resources. Connect industries. <em>Transport revenue.</em></h1>
+      <p>Every terminal is an NFT and a logistics business. Its token projects launch on pump.fun, and its trucks, trains and ships fulfil cargo contracts between industries, earning transport fees, handling fees and creator fees.</p>
+    </div>
+    <div class="mapwrap" id="mapwrap">${mapSVG()}</div>
+    <div class="legend">${VEH.map(v => `<span><i style="background:${VCOL[v.k]}"></i>${v.name}</span>`).join('')}</div>
+    <p class="mapnote">${S.deliveries} deliveries · ${S.moved.toLocaleString('en-US')} units moved.</p>
+  </section>
+  </div>
+  <section class="panel mt">
+    <h2 class="ph">${ICO.docs} Latest deliveries <small>contracts just completed</small><button class="link end" data-go="contracts">Contract board</button></h2>
+    ${latestSnap.length ? `<div class="feed">${latestSnap.map(x => `<div>${VICO[x.veh]}<b>${x.units.toLocaleString('en-US')} units</b><p>${I[x.from].name} → ${I[x.to].name}${x.term ? ' · terminal #' + x.term : ''}</p><span class="ago" data-k="ago:${x.t}">${ago(x.t)}</span></div>`).join('')}</div>`
+      : `<div class="empty">${truckSVG()}<span>No deliveries yet.</span></div>`}
+  </section>
+  <section class="panel mt">
+    <h2 class="ph">${ICO.how} How it works <small>seven steps</small><button class="link end" data-go="how">All the rules</button></h2>
+    ${stepsHTML()}
+  </section>`;
+}
+function stepsHTML(){
+  const st = [
+    [ICO.deploy, 'Establish a terminal', 'Buy a virtual logistics hub, a tradable NFT.'],
+    [VICO.train, 'Deploy vehicles', 'Acquire autonomous trucks, trains, ships, aircraft and more.'],
+    [IICO.mine, 'Generate cargo', 'Token projects produce virtual cargo: resources, launch credits and other in-game assets.'],
+    [ICO.network, 'Transport resources', 'AI agents find delivery contracts and route cargo between industries.'],
+    [ICO.contracts, 'Complete deliveries', 'Finished deliveries earn transport fees funded by participating projects.'],
+    [ICO.coin, 'Collect revenue', 'Transport fees, handling fees, rentals and 50% of your coins’ creator fees.'],
+    [ICO.depot, 'Expand the network', 'Reinvest in vehicles, bigger terminals and your own contracts.']
+  ];
+  return `<div class="steps">${st.map((x, i) => `<div>${x[0]}<span class="n">${pad2(i + 1)}</span><h3>${x[1]}</h3><p>${x[2]}</p></div>`).join('')}</div>`;
+}
+
+function vDeploy(){
+  const n = S.terms.length + 1, fee = mintPrice(n), can = W.addr && n <= CFG.SUPPLY && S.wal.sol >= fee;
+  return `<div class="grid-2"><div class="col">
+  <section class="panel step">
+    <h2 class="ph"><b>Step 1</b> <small>choose an industry</small><span class="tag or end">Now</span></h2>
+    <div class="pad"><h3>What does your terminal serve?</h3>
+      <p>Your terminal’s token projects belong to its industry. Contracts you post bring cargo from other industries to yours.</p>
+      <div class="opts">${INDS.map(x => `<button class="opt" data-act="pickInd" data-k="${x.k}" aria-pressed="${D.ind === x.k}">${IICO[x.k]}<b>${x.name}</b><span>${x.cargo}</span></button>`).join('')}</div>
+      <p class="note">All cargo and transport capacity are virtual. Revenue depends on actual platform demand and fees.</p>
+    </div>
+  </section>
+  <section class="panel step">
+    <h2 class="ph"><b>Step 2</b> <small>${fmtSol(fee)} SOL</small></h2>
+    <div class="pad"><h3>Establish terminal #${Math.min(n, CFG.SUPPLY)}</h3>
+      <p>Half the price buys and burns $FREIGHT, half funds operations. Your terminal comes with a Cargo Truck that starts picking up contracts straight away.</p>
+      ${!W.addr ? `<button class="btn dark" data-act="wallet">Connect wallet to deploy</button>`
+        : `<button class="btn dark" data-act="deploy" ${can ? '' : 'disabled'}>Establish ${I[D.ind].name} terminal</button>${S.wal.sol < fee ? `<p class="warn" style="margin:12px 0 0">Not enough SOL in your wallet.</p>` : ''}`}
+    </div>
+  </section></div>
+  <aside class="col">
+    <section class="panel"><h2 class="ph">${ICO.deploy} You get <small>after step 2</small></h2>
+      <div class="youget">${truckSVG()}<div><b>#${Math.min(n, CFG.SUPPLY)}</b><span>${I[D.ind].name} terminal<br>Garage for 4 vehicles, one Cargo Truck</span></div></div>
+    </section>
+    <section class="panel"><h2 class="ph">${ICO.coin} Summary <small>what moves</small></h2>
+      <div class="rows">
+        ${kv('Terminal price', fmtSol(fee) + ' SOL')}
+        ${kv('Vehicle included', 'Cargo Truck')}
+        ${kv('Your share of coin fees', '50%')}
+        ${kv('Handling fee on routed cargo', CFG.HUB_FEE * 100 + '%')}
+        ${kv('Wallet $FREIGHT', fmtTok(S.wal.frt))}
+      </div>
+    </section>
+  </aside></div>`;
+}
+
+function vehCard(v){
+  const t = v.term ? tById.get(v.term) : null, c = v.job ? S.cons.find(x => x.id === v.job.c) : null, out = v.rent && !v.rent.user, mine = isMine(v);
+  const status = c ? `${I[c.from].name} → ${I[c.to].name} · ${c.units.toLocaleString('en-US')} units` : isRenting(v) ? `Rented in, ${left(v.rent.until)} left` : out ? `Rented out, ${left(v.rent.until)} left` : v.rl ? 'Listed for rent' : t ? `Idle at terminal #${t.id}` : 'In the yard';
+  const p = c ? clamp((S.t - v.job.start) / (v.job.until - v.job.start), 0, 1) : 0;
+  const base = myTerms()[0];
+  return `<div class="veh"><div class="vh">${VICO[v.type]}<div><h4>${V[v.type].name} #${v.id}</h4><span class="st">${V[v.type].cap.toLocaleString('en-US')} units · ${V[v.type].h} h a trip</span></div></div>
+    <span class="st">${status}</span>${c ? `<div class="prog" aria-label="${Math.round(p * 100)}% delivered"><i style="width:${(p * 100).toFixed(0)}%"></i></div><span class="st">Arrives in <span data-k="left:${v.job.until}">${left(v.job.until)}</span> · ${fmtSol(c.pay)} SOL</span>` : ''}
+    <div class="btns">${!c && usable(v) && !v.term && base && vehsOf(base).length < garage(base) ? `<button class="btn sm" data-act="park" data-id="${v.id}">Park at #${base.id}</button>` : ''}
+      ${!c && usable(v) && v.term ? `<button class="btn sm" data-act="unpark" data-id="${v.id}">To yard</button>` : ''}
+      ${mine && !c && !out && !v.term ? (v.rl ? `<button class="btn sm" data-act="unlistV" data-id="${v.id}">Unlist</button>` : `<button class="btn sm" data-act="listV" data-id="${v.id}">Rent out · ${fmtTok(vRent(v))}/h</button>`) : ''}</div></div>`;
+}
+function vFleet(){
+  if (!W.addr) return `<section class="panel"><h2 class="ph">${ICO.fleet} My fleet</h2>
+    <div class="empty">${truckSVG()}<span>Connect a wallet to run your terminals and vehicles.</span><button class="btn or" data-act="wallet">Connect wallet</button></div></section>`;
+  const terms = myTerms(), vehs = myVehs(), yard = vehs.filter(v => !v.term);
+  return `<section class="panel"><h2 class="ph">${ICO.fleet} My fleet <small>revenue waits until you collect it</small></h2>
+    <div class="kv5">
+      <div><label>Terminals</label><b>${terms.length}</b></div>
+      <div><label>Vehicles</label><b>${vehs.length}</b></div>
+      <div><label>On the road</label><b>${vehs.filter(v => v.job).length}</b></div>
+      <div><label>Ready to collect</label><b class="g" data-k="myUn">${LIVE.myUn()}</b></div>
+      <div><label>$FREIGHT</label><b>${fmtTok(S.wal.frt)}</b></div>
+    </div>
+    <div class="actions">
+      <button class="btn or" data-act="claimAll" data-k="claimAll">${LIVE.claimAll()}</button>
+      <button class="btn" data-go="contracts">Contract board</button>
+      <button class="btn" data-go="depot">Depot</button>
+      <button class="btn" data-act="buyFrt" ${S.wal.sol < 1 ? 'disabled' : ''}>Swap 1 SOL for $FREIGHT</button>
+    </div>
+  </section>
+  ${terms.length ? terms.map(t => `<section class="panel mt"><h2 class="ph">${IICO[t.ind]} Terminal #${t.id} <small>${I[t.ind].name}${supplied(t) ? ' · supplied, +15% coin output' : ''}${hasConvoy(t) ? ' · convoy coordinating' : ''}</small></h2>
+    <div class="term" style="border-top:0"><div>${termArt(t)}</div>
+      <div><h3>#${t.id} <span class="tag ghost">${I[t.ind].name}</span></h3>
+        <div class="stats"><div><label>Vehicles</label><b>${vehsOf(t).length} / ${garage(t)}</b></div><div><label>Coins live</label><b>${t.live} / ${1 + t.lvl}</b></div><div><label>Ready to collect</label><b data-k="un:${t.id}">${LIVE.un(t.id)}</b></div><div><label>Handling fees earned</label><b>${fmtSol(t.handled || 0)} SOL</b></div></div>
+        <div class="btns"><button class="btn sm or" data-act="claim" data-id="${t.id}">Collect</button></div></div>
+      <div><div class="up"><b>AI dispatch</b><small>${t.auto !== false ? 'Idle vehicles pick up the best-paying contract they can make in time.' : 'Off: you accept every contract yourself.'}</small><div class="seg"><button class="chip" data-act="setAuto" data-id="${t.id}" data-v="1" aria-pressed="${t.auto !== false}">On</button><button class="chip" data-act="setAuto" data-id="${t.id}" data-v="0" aria-pressed="${t.auto === false}">Off</button></div></div>
+        <div class="up"><b>Terminal size<span class="pips">${[1, 2, 3].map(i => `<i class="${i <= t.lvl ? 'on' : ''}"></i>`).join('')}</span></b><small>${t.lvl < 3 ? `Next: garage for ${garage({ lvl: t.lvl + 1 })} vehicles and ${2 + t.lvl} coins at once` : 'Maxed out'}</small>${t.lvl < 3 ? `<button class="btn sm" data-act="termUp" data-id="${t.id}" ${S.wal.frt < 25000 * t.lvl ? 'disabled' : ''}>Expand · ${fmtTok(25000 * t.lvl)}</button>` : ''}</div>
+        <p class="small" style="margin:10px 0 0">Fuel for each trip is paid in $FREIGHT when a vehicle accepts a contract.</p></div>
+    </div>
+    <h3 class="ph" style="border-top:1px solid var(--rule)">${VICO.truck} Garage <small>${vehsOf(t).length} vehicles</small></h3>
+    <div class="vehs">${vehsOf(t).map(vehCard).join('') || `<div class="empty">No vehicles parked.</div>`}</div>
+  </section>`).join('') : `<section class="panel mt"><div class="empty">${truckSVG()}<span>No terminal yet.</span><button class="btn sm or" data-go="deploy">Establish a terminal</button></div></section>`}
+  ${yard.length ? `<section class="panel mt"><h2 class="ph">${VICO.truck} Yard <small>vehicles not parked at a terminal</small></h2><div class="vehs">${yard.map(vehCard).join('')}</div></section>` : ''}`;
+}
+
+function calcHTML(){
+  const T = V[CALC.type], trips = Math.ceil(CALC.units / T.cap), cost = trips * T.cost, util = CALC.units / (trips * T.cap);
+  return `<div class="calc"><div>
+      <label>Freight vehicle</label><div class="seg" style="margin-bottom:14px">${VEH.map(v => `<button class="chip" data-act="calcV" data-k="${v.k}" aria-pressed="${CALC.type === v.k}">${VICO[v.k]} ${v.name}</button>`).join('')}</div>
+      <label for="calcU">Cargo quantity · <span id="calcUv">${CALC.units.toLocaleString('en-US')}</span> units</label><input id="calcU" type="range" min="100" max="10000" step="100" value="${CALC.units}" data-act="calcU">
+    </div><div><label>Estimated contract requirements</label>
+      <div class="res"><div><label>Trips required</label><b id="cTrips">${trips}</b></div><div><label>Virtual transport cost</label><b id="cCost">${cost} credits</b></div><div><label>Vehicle capacity</label><b>${T.cap.toLocaleString('en-US')} units</b></div><div><label>Cargo utilization</label><b id="cUtil">${Math.round(util * 100)}%</b></div></div>
+      <p class="small" style="margin:12px 0 0">One credit is ${CFG.FUEL_MULT} $FREIGHT of fuel.</p></div></div>`;
+}
+function conCard(c){
+  const mine = W.addr ? myVehs().filter(v => !v.job && usable(v) && v.term) : [];
+  const opts = mine.map(v => ({ v, e: eligible(v, c) }));
+  const v = c.veh ? vById.get(c.veh) : null;
+  return `<div class="con"><div class="route">${IICO[c.from]}${I[c.from].name}<i>→</i>${IICO[c.to]}${I[c.to].name}</div>
+    <div class="tags">${c.express ? '<span class="tag or">Express</span>' : ''}${c.heavy ? '<span class="tag st">Heavy cargo</span>' : ''}${dist(c.from, c.to) > 0.9 ? '<span class="tag ghost">Distant</span>' : ''}${c.poster ? '<span class="tag ghost">Posted by a terminal</span>' : ''}</div>
+    <dl><dt>Cargo</dt><dd>${c.units.toLocaleString('en-US')} units of ${I[c.from].cargo.toLowerCase()}</dd><dt>Pays</dt><dd>${fmtSol(c.pay)} SOL</dd><dt>${c.status === 'open' ? 'Deadline' : 'Arrives'}</dt><dd data-k="left:${c.status === 'open' ? c.deadline : c.until}">${left(c.status === 'open' ? c.deadline : c.until)}</dd>${c.hub ? `<dt>Routed via</dt><dd>Terminal #${c.hub}</dd>` : ''}${v ? `<dt>Carrier</dt><dd>${V[v.type].name} #${v.id}</dd>` : ''}</dl>
+    ${c.status === 'open' && W.addr ? (opts.length ? `<div class="seg">${opts.map(({ v, e }) => `<button class="chip" data-act="acceptC" data-c="${c.id}" data-v="${v.id}" ${e.ok && S.wal.frt >= e.fuel ? '' : 'disabled'} title="${e.ok ? '' : esc(e.why)}">${VICO[v.type]} #${v.id} ${e.ok ? `· ${e.trips} trip${e.trips > 1 ? 's' : ''} · ${fmtTok(e.fuel)} fuel` : '· ' + esc(e.why)}</button>`).join('')}</div>` : `<p class="small" style="margin:0">No idle vehicle at your terminals.</p>`) : ''}</div>`;
+}
+function vContracts(){
+  let list = S.cons.filter(c => c.status === 'open');
+  if (M.filter === 'express') list = list.filter(c => c.express); else if (M.filter === 'heavy') list = list.filter(c => c.heavy);
+  list.sort((a, b) => b.pay - a.pay);
+  const active = S.cons.filter(c => c.status === 'active').sort((a, b) => a.until - b.until).slice(0, 9);
+  const segb = (v, l) => `<button class="chip" data-act="cf" data-v="${v}" aria-pressed="${M.filter === v}">${l}</button>`;
+  const base = myTerms()[0];
+  const pPay = base ? 0.004 * (POST.units / 500) ** 0.8 * (0.6 + dist(POST.from, base.ind)) * 1.1 : 0;
+  return `<section class="panel"><h2 class="ph">${ICO.contracts} Freight contracts <small>${list.length} open · operators compete to fulfil them</small></h2>
+    <div class="filters"><div class="seg"><span>Show</span>${segb('all', 'All')}${segb('express', 'Express')}${segb('heavy', 'Heavy cargo')}</div></div>
+    ${list.length ? `<div class="cons" style="border-top:1px solid var(--rule)">${list.map(conCard).join('')}</div>` : `<div class="empty">${truckSVG()}<span>No open contracts right now.</span></div>`}
+  </section>
+  <section class="panel mt"><h2 class="ph">${ICO.network} Freight contract calculator <small>plan a contract</small></h2>${calcHTML()}</section>
+  <section class="panel mt"><h2 class="ph">${ICO.deploy} Post a contract <small>bring cargo to your terminal</small></h2>
+    ${!W.addr ? `<div class="empty">${truckSVG()}<span>Connect a wallet to post contracts.</span><button class="btn or" data-act="wallet">Connect wallet</button></div>`
+      : !base ? `<div class="empty">${truckSVG()}<span>You need a terminal to receive cargo.</span><button class="btn sm or" data-go="deploy">Establish a terminal</button></div>`
+      : `<div class="pad"><p class="small" style="margin:0 0 12px">Request cargo from another industry, such as materials from a mining project. When your cargo is delivered, terminal #${base.id}’s coins get +15% output for 12 hours. Unfilled contracts are refunded at the deadline.</p>
+        <label>From</label><div class="seg" style="margin-bottom:12px">${INDS.filter(x => x.k !== base.ind).map(x => `<button class="chip" data-act="pFrom" data-k="${x.k}" aria-pressed="${POST.from === x.k}">${IICO[x.k]} ${x.name}</button>`).join('')}</div>
+        <label>Cargo</label><div class="seg" style="margin-bottom:14px">${[500, 1500, 3000].map(u => `<button class="chip" data-act="pUnits" data-v="${u}" aria-pressed="${POST.units === u}">${u.toLocaleString('en-US')} units</button>`).join('')}</div>
+        <div class="btns"><button class="btn or" data-act="postC" ${S.wal.sol >= pPay && POST.from !== base.ind ? '' : 'disabled'}>Post ${I[POST.from].name} → ${I[base.ind].name} · ${fmtSol(pPay)} SOL</button></div></div>`}
+  </section>
+  ${active.length ? `<section class="panel mt"><h2 class="ph">${VICO.train} On the road <small>${S.cons.filter(c => c.status === 'active').length} deliveries in progress</small></h2><div class="cons">${active.map(conCard).join('')}</div></section>` : ''}`;
+}
+
+function vDepot(){
+  return `<section class="panel"><h2 class="ph">${ICO.depot} Depot <small>acquire freight vehicles</small></h2>
+    <div class="tw"><table><thead><tr><th></th><th>Vehicle</th><th>Function</th><th class="r">Capacity</th><th class="r">Trip</th><th class="r">Operating cost</th><th>Routes</th><th class="r">Price</th><th></th></tr></thead><tbody>
+    ${VEH.map(v => `<tr><td>${VICO[v.k]}</td><td><b>${v.name}</b></td><td>${v.fn}</td><td class="r">${v.cap.toLocaleString('en-US')}</td><td class="r">${v.h} h</td><td class="r">${v.cost} cr</td><td>${v.rule}</td><td class="r">${fmtTok(v.price)}</td><td class="r">${W.addr ? `<button class="btn sm or" data-act="buyVeh" data-k="${v.k}" ${S.wal.frt < v.price ? 'disabled' : ''}>Buy</button>` : ''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="small" style="margin:0;padding:12px 18px;border-top:1px solid var(--rule)">Vehicles are paid for in $FREIGHT and burned. A new vehicle parks at your terminal if its garage has room, or waits in your yard. Trip times stretch with route distance.</p>
+  </section>`;
+}
+
+function vRentals(){
+  const d = DURS[M.dur], list = S.vehs.filter(v => v.rl && !v.user).sort((a, b) => (!!a.rent - !!b.rent) || V[b.type].price - V[a.type].price);
+  const segb = (val, label) => `<button class="chip" data-act="md" data-v="${val}" aria-pressed="${M.dur === val}">${label}</button>`;
+  return `<section class="panel"><h2 class="ph">${ICO.rent} Freight rental marketplace <small>${list.length} vehicles · fulfil contracts without buying</small></h2>
+    <div class="filters"><div class="seg"><span>Rent for</span>${DURS.map((x, i) => segb(i, x.name + (x.off ? ` (−${x.off * 100}%)` : ''))).join('')}</div></div>
+    ${list.length ? `<div class="vehs" style="border-top:1px solid var(--rule)">${list.map(v => { const cost = v.rl.price * d.h * (1 - d.off);
+      return `<div class="veh"><div class="vh">${VICO[v.type]}<div><h4>${V[v.type].name} #${v.id}</h4><span class="st">${V[v.type].cap.toLocaleString('en-US')} units · ${V[v.type].h} h a trip</span></div></div><span class="st">${fmtTok(v.rl.price)}/h · owner takes ${v.rl.share * 100}% of delivery pay</span>
+      <div class="btns">${v.rent ? `<button class="btn sm" disabled>Rented, back in ${left(v.rent.until)}</button>` : !W.addr ? `<button class="btn sm" data-act="wallet">Connect wallet</button>` : `<button class="btn sm or" data-act="rentV" data-id="${v.id}" ${S.wal.frt < cost ? 'disabled' : ''}>Rent ${d.name} · ${fmtTok(cost)}</button>`}</div></div>`; }).join('')}</div>`
+      : `<div class="empty">${truckSVG()}<span>No vehicles for rent right now.</span></div>`}
+    <p class="small" style="margin:0;padding:12px 18px;border-top:1px solid var(--rule)">Fleet owners earn the rent (90%, 10% burned) and their agreed share of every delivery a rented vehicle completes. List your own vehicles from My fleet.</p>
+  </section>`;
+}
+
+function vHow(){
+  const sq = Array.from({ length: 100 }, (_, i) => `<i class="${i < 50 ? 'sq-a' : i < 65 ? 'sq-b' : i < 85 ? 'sq-c' : 'sq-d'}"></i>`).join('');
+  return `<section class="panel"><h2 class="ph">${ICO.how} How it works <small>every vehicle is an independent logistics business</small></h2>${stepsHTML()}</section>
+  <div class="two mt">
+    <section class="panel"><h2 class="ph">${VICO.train} Freight vehicles</h2>
+      <div class="tw"><table><thead><tr><th></th><th>Vehicle</th><th>Function</th></tr></thead><tbody>${VEH.map(v => `<tr><td>${VICO[v.k]}</td><td><b>${v.name}</b></td><td>${v.fn}</td></tr>`).join('')}</tbody></table></div>
+    </section>
+    <section class="panel"><h2 class="ph">${ICO.network} The interconnected industrial economy</h2>
+      <div class="tw"><table><thead><tr><th></th><th>Industry</th><th>Virtual cargo</th></tr></thead><tbody>${INDS.map(x => `<tr><td>${IICO[x.k]}</td><td><b>${x.name}</b></td><td>${x.cargo}</td></tr>`).join('')}</tbody></table></div>
+    </section>
+  </div>
+  <section class="panel mt"><h2 class="ph">${ICO.contracts} Freight contracts</h2>
+    <div class="pbody"><p>Contracts are funded from the freight fund, which receives 15% of every coin’s creator fees, or by terminals that post their own. A vehicle can accept a contract only if it can carry the cargo and arrive before the deadline: heavy cargo needs a train, heavy hauler or ship; ships need distant or Logistics routes; trucks stick to nearby routes.</p>
+    <p>Each contract routes through a hub terminal, which earns a ${CFG.HUB_FEE * 100}% handling fee. A terminal with an Autonomous Convoy earns ${CFG.CONVOY * 100}% more on every delivery.</p></div>
+  </section>
+  <section class="panel mt"><h2 class="ph">${ICO.coin} Where every creator fee goes <small>100 squares, one per percent</small></h2>
+    <div class="split"><div class="squares" aria-hidden="true">${sq}</div></div>
+    <div class="splitkeys">
+      <div><span class="k"><i class="sq-a"></i>The terminal</span><b>50%</b><p>The terminal whose project launched the coin.</p></div>
+      <div><span class="k"><i class="sq-b"></i>Freight fund</span><b>15%</b><p>Funds delivery contracts across the network.</p></div>
+      <div><span class="k"><i class="sq-c"></i>Buy and burn</span><b>20%</b><p>A defined share that buys and burns $FREIGHT.</p></div>
+      <div><span class="k"><i class="sq-d"></i>Operations</span><b>15%</b><p>Pays for the AI agents and the keeper.</p></div>
+    </div>
+  </section>
+  <section class="panel mt"><h2 class="ph">${ICO.network} The flywheel <small>all cargo and transport capacity are virtual</small></h2>
+    <div class="fly">
+      <div><span class="n">1</span><b>More vehicles</b><span>Users deploy trucks, trains and ships.</span></div>
+      <div><span class="n">2</span><b>More deliveries</b><span>AI logistics agents fulfil contracts.</span></div>
+      <div><span class="n">3</span><b>More network activity</b><span>Projects exchange virtual resources.</span></div>
+      <div><span class="n">4</span><b>More transport revenue</b><span>Operators earn delivery fees and rent.</span></div>
+      <div><span class="n">5</span><b>More $FREIGHT utility</b><span>Spent on vehicles, terminals and fuel.</span></div>
+      <div><span class="n">6</span><b>Buybacks and burns</b><span>A defined share of actual protocol revenue.</span></div>
+    </div>
+  </section>`;
+}
+
+const DOCS = [
+  ['overview','Overview', () => `<p>Freight is a Solana launchpad built as a logistics economy. Each <strong>terminal</strong> is an NFT that launches token projects for its industry on pump.fun and runs a garage of <strong>vehicles</strong>. Vehicles fulfil <strong>contracts</strong> to move virtual cargo between industries, earning transport fees. All cargo and transport capacity are virtual.</p>`],
+  ['deploying','Deploying', () => `<p>The terminal price rises evenly from 0.25 SOL for #1 to 1.25 SOL for #1,000: <code>0.25 + 1.0 × (n − 1) / 999</code>. Half buys and burns $FREIGHT, half funds operations. Every terminal starts with a Cargo Truck. Expanding a terminal costs 25,000 $FREIGHT × its size and adds garage space and coin slots.</p>`],
+  ['vehicles','Vehicles', () => `<div class="tw"><table><thead><tr><th>Vehicle</th><th class="r">Capacity</th><th class="r">Trip</th><th class="r">Cost</th><th>Routes</th></tr></thead><tbody>${VEH.map(v => `<tr><td><strong>${v.name}</strong></td><td class="r">${v.cap.toLocaleString('en-US')}</td><td class="r">${v.h} h</td><td class="r">${v.cost} cr</td><td>${v.rule}</td></tr>`).join('')}</tbody></table></div><p>Trip time is multiplied by route distance, from 0.6× for neighbours to 1.6× across the network. Fuel is ${CFG.FUEL_MULT} $FREIGHT per credit, paid on acceptance; half is burned.</p>`],
+  ['contracts','Contracts', () => `<p>Open contracts list their route, cargo, pay and deadline. Express contracts pay 60% more with a 2-hour deadline. Heavy cargo pays 30% more. Pay is released to the carrier’s terminal on delivery, less the hub’s ${CFG.HUB_FEE * 100}% handling fee and any rented-vehicle share.</p>
+    <h4>Launch rules</h4><ul><li>No real people’s names or likeness, and no implied endorsement.</li><li>No existing brands, and no ticker that is already live on pump.fun.</li><li>No promises of returns in any coin or its promotion.</li></ul>`],
+  ['fees','Fees', () => `<div class="tw"><table><thead><tr><th>To</th><th class="r">Share</th></tr></thead><tbody><tr><td>The launching terminal</td><td class="r">50%</td></tr><tr><td>Freight fund (pays contracts)</td><td class="r">15%</td></tr><tr><td>$FREIGHT buy and burn</td><td class="r">20%</td></tr><tr><td>Operations</td><td class="r">15%</td></tr></tbody></table></div>`],
+  ['rentals','Rentals', () => `<p>Owners list vehicles by the hour, day or week, priced in $FREIGHT, and set their share of delivery pay: 10%, 20% or 30%. A day is 10% cheaper per hour, a week 25% cheaper. Each payment settles when the rental starts: 90% to the owner, 10% burned.</p>`],
+  ['token','$FREIGHT', () => `<p>$FREIGHT is the pad’s token, launched on pump.fun. It pays for vehicles, terminal expansions, fuel and rentals. A defined share of actual protocol revenue funds buybacks and burns.</p>`],
+  ['faq','FAQ', () => [
+      ['Is the cargo real?','No. All cargo and transport capacity are virtual in-game assets.'],
+      ['Who is the creator of the coins?','The terminal. Its address is set as the coin’s creator on pump.fun, and the fee split is locked in the same transaction.'],
+      ['What happens to my vehicles if I sell my terminal?','Vehicles parked there go with it. Move any you want to keep to your yard first.']
+    ].map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')],
+  ['risks','Risks', () => `<ul><li>Most coins on pump.fun stop trading within days.</li><li>Revenue depends on actual platform demand and fees, not guaranteed returns.</li><li>pump.fun can change its fee rates or creator fee program at any time.</li><li>Smart contracts and autonomous agents can have bugs even after testing.</li></ul>`]
+];
+function vDocs(){
+  return `<div class="docs"><nav class="panel toc" aria-label="Docs contents"><h2 class="ph">${ICO.docs} Docs <small>contents</small></h2>
+    <ol>${DOCS.map((d, i) => `<li><button data-act="docjump" data-id="${d[0]}"><span>${pad2(i + 1)}</span>${d[1]}</button></li>`).join('')}</ol></nav>
+    <div class="col">${DOCS.map(d => `<section class="panel doc" id="doc-${d[0]}"><h2 class="ph">${d[1]}</h2><div class="body">${d[2]()}</div></section>`).join('')}</div></div>`;
+}
+
+/* ---------- render ---------- */
+let lastVer = -1, lastTab = '', lastRender = 0, lastFull = 0;
+const VIEWS = { network: vNetwork, deploy: vDeploy, fleet: vFleet, contracts: vContracts, depot: vDepot, rentals: vRentals, how: vHow, docs: vDocs };
+function render(force){
+  const now = performance.now();
+  const dynamic = !(tab === 'how' || tab === 'docs' || tab === 'depot');
+  if (!force && tab === lastTab && (!dynamic || S.ver === lastVer || now - lastRender < 2500)) return;
+  if (!force && tab === 'network' && now - lastFull < 15000) { lastVer = S.ver; lastRender = now; const m = $('#mapwrap'); if (m) m.innerHTML = mapSVG(); return; }
+  if (!force && (tab === 'fleet' || tab === 'contracts') && now - lastFull < 5000) return;
+  lastVer = S.ver; lastTab = tab; lastRender = now; lastFull = now;
+  const y = window.scrollY;
+  $('#view').innerHTML = VIEWS[tab]();
+  window.scrollTo(0, y);
+}
+function paintTabs(){ $('#tabs').innerHTML = TABS.map(([k, label, icon], i) => `<a href="#${k}"${tab === k ? ' aria-current="page"' : ''}>${icon}<span>${label}</span><em>${i + 1}</em></a>`).join(''); }
+function updateLive(){ document.querySelectorAll('[data-k]').forEach(el => { const [k, a] = el.dataset.k.split(':'); const f = LIVE[k]; if (!f) return; const v = f(a); if (el.textContent !== v) el.textContent = v; }); }
+function route(){ const h = location.hash.replace('#', ''); tab = VIEWS[h] ? h : 'network'; paintTabs(); render(true); updateLive(); }
+
+/* ---------- overlays ---------- */
+let lastFocus = null;
+function modal(html){ if (!$('#overlay').innerHTML) lastFocus = document.activeElement; $('#overlay').innerHTML = `<div class="scrim" data-act="scrim">${html}</div>`; const f = $('#overlay').querySelector('[aria-pressed="true"],button,a'); f && f.focus(); }
+function closeModal(){ $('#overlay').innerHTML = ''; lastFocus && lastFocus.focus && lastFocus.focus(); }
+function toast(msg){ const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 3) box.firstChild.remove(); setTimeout(() => t.remove(), 3800); }
+
+/* ---------- actions ---------- */
+const after = () => { S.ver++; render(true); updateLive(); };
+document.addEventListener('input', ev => {
+  if (ev.target.id !== 'calcU') return;
+  CALC.units = +ev.target.value; const T = V[CALC.type], trips = Math.ceil(CALC.units / T.cap);
+  $('#calcUv').textContent = CALC.units.toLocaleString('en-US'); $('#cTrips').textContent = trips; $('#cCost').textContent = trips * T.cost + ' credits'; $('#cUtil').textContent = Math.round(CALC.units / (trips * T.cap) * 100) + '%';
+});
+document.addEventListener('click', async ev => {
+  const go = ev.target.closest('[data-go]');
+  if (go) { if ($('#overlay').innerHTML) closeModal(); location.hash = '#' + go.dataset.go; return; }
+  const a = ev.target.closest('[data-act]');
+  if (!a || a.id === 'calcU') { if (!ev.target.closest('.walletcell')) $('#walletMenu').hidden = true; return; }
+  const act = a.dataset.act;
+  if (act === 'scrim') { if (ev.target === a) closeModal(); return; }
+  switch (act) {
+    case 'close': closeModal(); break;
+    case 'wallet':
+      if (W.addr && a.id === 'walletBtn') { const m = $('#walletMenu'); paintWallet(); m.hidden = !m.hidden; }
+      else openWalletModal();
+      break;
+    case 'pickWallet': {
+      const entry = W.list[+a.dataset.i];
+      a.disabled = true; const em = a.querySelector('em'); if (em) em.textContent = 'Approve in wallet…';
+      try { await connectEntry(entry, false); closeModal(); toast(`Connected ${short(W.addr)}`); }
+      catch (err) { a.disabled = false; if (em) em.textContent = 'Detected'; toast(err && err.message && /reject|denied|cancel/i.test(err.message) ? 'Connection request was declined in the wallet.' : 'Couldn’t connect. Unlock the wallet and try again.'); }
+      break; }
+    case 'guestWallet': setWallet(randAddr(Math.random), null); closeModal(); toast('Connected as guest'); break;
+    case 'disconnect': clearWallet(); toast('Wallet disconnected'); break;
+    case 'copyAddr': try { await navigator.clipboard.writeText(W.addr); toast('Address copied'); } catch (e) { toast(W.addr); } break;
+    case 'pickInd': D.ind = a.dataset.k; render(true); break;
+    case 'deploy': {
+      const n = S.terms.length + 1, fee = mintPrice(n); if (!W.addr || n > CFG.SUPPLY || S.wal.sol < fee) break;
+      S.wal.sol -= fee; S.burnSol += fee * 0.5; S.burned += fee * 0.5 / price(); S.ops += fee * 0.5;
+      const t = { id: n, owner: W.addr, user: true, ind: D.ind, lvl: 1, live: 0, count: 0, unclaimed: 0, own: 0, rv: 0, auto: true, sup: 0, t: S.t };
+      S.terms.push(t); tById.set(t.id, t); newVeh('truck', W.addr, true, t);
+      if (POST.from === t.ind) POST.from = INDS.find(x => x.k !== t.ind).k;
+      save(); toast(`Terminal #${n} is open with a Cargo Truck. AI dispatch is on.`); location.hash = '#fleet'; after(); break; }
+    case 'setAuto': { const t = tById.get(+a.dataset.id); if (!isMine(t)) break; t.auto = a.dataset.v === '1'; after(); break; }
+    case 'termUp': { const t = tById.get(+a.dataset.id); if (!isMine(t) || t.lvl >= 3) break; const c = 25000 * t.lvl; if (S.wal.frt < c) break; S.wal.frt -= c; S.burned += c; t.lvl++; toast(`Terminal #${t.id} expanded`); after(); break; }
+    case 'claim': { const t = tById.get(+a.dataset.id); if (!isMine(t)) break; const v = t.unclaimed; S.wal.sol += v; t.unclaimed = 0; toast(v > 0 ? `Collected ${fmtSol(v)} SOL` : 'Nothing to collect yet'); after(); break; }
+    case 'claimAll': { let v = S.vehUn; S.vehUn = 0; for (const t of myTerms()) { v += t.unclaimed; t.unclaimed = 0; } S.wal.sol += v; toast(v > 0 ? `Collected ${fmtSol(v)} SOL` : 'Nothing to collect yet'); after(); break; }
+    case 'buyFrt': if (S.wal.sol >= 1) { const t = 1 / price(); S.wal.sol -= 1; S.wal.frt += t; toast(`Swapped 1 SOL for ${fmtTok(t)} $FREIGHT`); after(); } break;
+    case 'buyVeh': { const k = a.dataset.k, c = V[k].price; if (!W.addr || S.wal.frt < c) break; S.wal.frt -= c; S.burned += c; const t = myTerms().find(x => vehsOf(x).length < garage(x)); const v = newVeh(k, W.addr, true, t || null); toast(`${V[k].name} #${v.id} ${t ? 'parked at terminal #' + t.id : 'is in your yard'}`); after(); break; }
+    case 'park': { const v = vById.get(+a.dataset.id), t = myTerms()[0]; if (!v || !t || !usable(v) || vehsOf(t).length >= garage(t)) break; v.term = t.id; after(); break; }
+    case 'unpark': { const v = vById.get(+a.dataset.id); if (!v || !usable(v) || v.job) break; v.term = null; after(); break; }
+    case 'listV': { const v = vById.get(+a.dataset.id); if (!isMine(v) || v.term) break; v.rl = { price: vRent(v), share: 0.2 }; toast(`${V[v.type].name} #${v.id} listed for rent`); after(); break; }
+    case 'unlistV': { const v = vById.get(+a.dataset.id); if (!isMine(v)) break; v.rl = null; after(); break; }
+    case 'rentV': { const v = vById.get(+a.dataset.id), d = DURS[M.dur]; if (!v || !v.rl || v.rent || !W.addr) break; const cost = v.rl.price * d.h * (1 - d.off); if (S.wal.frt < cost) break; S.wal.frt -= cost; S.burned += cost * CFG.RENT_BURN; v.rent = { who: W.addr, user: true, until: S.t + d.h * HOUR, share: v.rl.share };
+      const t = myTerms().find(x => vehsOf(x).length < garage(x)); if (t) v.term = t.id; toast(`Rented ${V[v.type].name} #${v.id} for ${d.name}${t ? ', parked at terminal #' + t.id : ''}`); after(); break; }
+    case 'acceptC': { const c = S.cons.find(x => x.id === +a.dataset.c), v = vById.get(+a.dataset.v); if (!c || !v || c.status !== 'open' || !usable(v) || v.job) break; if (accept(v, c)) toast(`${V[v.type].name} #${v.id} accepted: ${c.units.toLocaleString('en-US')} units ${I[c.from].name} → ${I[c.to].name}`); after(); break; }
+    case 'cf': M.filter = a.dataset.v; render(true); break;
+    case 'md': M.dur = +a.dataset.v; render(true); break;
+    case 'calcV': CALC.type = a.dataset.k; render(true); break;
+    case 'pFrom': POST.from = a.dataset.k; render(true); break;
+    case 'pUnits': POST.units = +a.dataset.v; render(true); break;
+    case 'postC': { const t = myTerms()[0]; if (!t || POST.from === t.ind) break; const pPay = 0.004 * (POST.units / 500) ** 0.8 * (0.6 + dist(POST.from, t.ind)) * 1.1; if (S.wal.sol < pPay) break; S.wal.sol -= pPay; const c = newContract(Math.random, t.id, POST.from, t.ind, POST.units); if (c) { c.pay = pPay; toast(`Contract posted: ${POST.units.toLocaleString('en-US')} units ${I[POST.from].name} → ${I[t.ind].name}`); } after(); break; }
+    case 'docjump': { const el = document.getElementById('doc-' + a.dataset.id); el && el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); break; }
+  }
+  if (act !== 'wallet' && !a.closest('#walletMenu')) $('#walletMenu').hidden = true;
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if ($('#overlay').innerHTML) closeModal(); $('#walletMenu').hidden = true; } });
+window.addEventListener('hashchange', route);
+
+/* ---------- boot ---------- */
+load();
+S.speed = 60;
+route();
+paintWallet();
+setTimeout(eagerConnect, 500);
+let lastTick = performance.now(), lastSave = 0;
+setInterval(() => {
+  const now = performance.now(), dt = Math.min(2, (now - lastTick) / 1000); lastTick = now;
+  if (S.speed > 0) advance(S.speed * dt / 60);
+  updateLive(); render(false);
+  if (now - lastSave > 5000) { save(); lastSave = now; }
+}, 250);
+window.addEventListener('pagehide', save);
+</script>
+</body>
+</html>
